@@ -246,3 +246,6 @@ ModelManifest.xml
 
 # Inflo Custom Ignores
 **/*.js.map
+
+# Rider specific folder
+.idea/
