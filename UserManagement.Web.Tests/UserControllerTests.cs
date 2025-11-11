@@ -23,6 +23,32 @@ public class UserControllerTests
             .Which.Items.Should().BeEquivalentTo(users);
     }
 
+    [Fact]
+    public void ListByActive_WhenFilteringActiveUsers_ModelMustContainOnlyActiveUsers()
+    {
+        var controller = this.CreateController();
+        var users = this.SetupUsers(isActive: true);
+
+        var result = controller.ListByActive(isActive: true);
+
+        result.Value
+            .Should().BeOfType<UserListDto>()
+            .Which.Items.Should().BeEquivalentTo(users);
+    }
+
+    [Fact]
+    public void ListByActive_WhenFilteringInactiveUsers_ModelMustContainOnlyInactiveUsers()
+    {
+        var controller = this.CreateController();
+        var users = this.SetupUsers(isActive: false);
+
+        var result = controller.ListByActive(isActive: false);
+
+        result.Value
+            .Should().BeOfType<UserListDto>()
+            .Which.Items.Should().BeEquivalentTo(users);
+    }
+    
     private User[] SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
     {
         var users = new[]
@@ -38,6 +64,10 @@ public class UserControllerTests
 
         this.userService
             .Setup(s => s.GetAll())
+            .Returns(users);
+
+        this.userService
+            .Setup(s => s.FilterByActive(isActive))
             .Returns(users);
 
         return users;

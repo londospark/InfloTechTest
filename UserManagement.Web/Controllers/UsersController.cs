@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
 using UserManagement.Shared.DTOs;
 
@@ -11,15 +12,30 @@ public class UsersController(IUserService userService) : ControllerBase
     [HttpGet]
     public ActionResult<UserListDto> List()
     {
-        var items = userService.GetAll().Select(p => new UserListItemDto(
-            p.Id,
-            p.Forename,
-            p.Surname,
-            p.Email,
-            p.IsActive
-        )).ToList();
+        var items = userService.GetAll().Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
         return dto;
     }
+
+    [HttpGet]
+    public ActionResult<UserListDto> ListByActive([FromQuery(Name = "active")] bool isActive)
+    {
+        var items = userService.FilterByActive(isActive).Select(Mappers.Map).ToList();
+
+        var dto = new UserListDto(items);
+        return dto;
+    }
+
+}
+
+public static class Mappers
+{
+    public static UserListItemDto Map(this User user) => new(
+        user.Id,
+        user.Forename,
+        user.Surname,
+        user.Email,
+        user.IsActive
+    );
 }
