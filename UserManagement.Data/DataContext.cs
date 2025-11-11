@@ -6,8 +6,18 @@ namespace UserManagement.Data;
 
 public class DataContext : DbContext, IDataContext
 {
-    public DataContext(DbContextOptions<DataContext> options) : base(options) =>
-        Database.EnsureCreated();
+    public DataContext(DbContextOptions<DataContext> options) : base(options)
+    {
+        // Use migrations for relational providers; keep EnsureCreated for InMemory used in tests.
+        if (Database.IsInMemory())
+        {
+            Database.EnsureCreated();
+        }
+        else
+        {
+            Database.Migrate();
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder model)
         => model.Entity<User>().HasData(new[]
