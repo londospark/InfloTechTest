@@ -1,6 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var database = builder.AddSqlServer("SQL-Server")
+    .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume()
     .AddDatabase("UserManagement");
 
