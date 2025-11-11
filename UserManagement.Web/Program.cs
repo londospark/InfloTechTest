@@ -12,10 +12,11 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services
-    .AddDataAccess()
     .AddDomainServices()
     .AddMarkdown()
     .AddControllers();
+
+builder.AddDataAccess();
 
 var corsPolicyName = "AllowFrontend";
 

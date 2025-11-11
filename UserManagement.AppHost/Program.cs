@@ -1,8 +1,14 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var api = builder.AddProject<Projects.UserManagement_Web>("Api")
+var database = builder.AddSqlServer("SQL-Server")
+    .WithDataVolume()
+    .AddDatabase("UserManagement");
+
+var api = builder.AddProject<Projects.UserManagement_Web>("API")
     .WithUrlForEndpoint("https", url => url.DisplayText = "Home")
-    .WithUrlForEndpoint("http", url => url.DisplayText = "Home (http)");
+    .WithUrlForEndpoint("http", url => url.DisplayText = "Home (http)")
+    .WithReference(database)
+    .WaitFor(database);
 
 var frontend = builder.AddProject<Projects.UserManagement_Blazor>("Blazor")
     .WithUrlForEndpoint("https", url => url.DisplayText = "Home")

@@ -18,7 +18,7 @@ public class UsersController(IUserService userService) : ControllerBase
         return dto;
     }
 
-    [HttpGet]
+    [HttpGet("filter")]
     public ActionResult<UserListDto> ListByActive([FromQuery(Name = "active")] bool isActive)
     {
         var items = userService.FilterByActive(isActive).Select(Mappers.Map).ToList();
