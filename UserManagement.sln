@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserManagement.ServiceDefau
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserManagement.Blazor", "UserManagement.Blazor\UserManagement.Blazor.csproj", "{D83733FC-2E47-4AFC-9DB5-09B63CE040FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserManagement.Blazor.Tests", "UserManagement.Blazor.Tests\UserManagement.Blazor.Tests.csproj", "{BC7E49A2-96B2-4E1B-9F2B-55E94E7D1E4B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserManagement.Shared", "UserManagement.Shared\UserManagement.Shared.csproj", "{3FEC61DD-DB22-4D26-B8EA-21DA0898374A}"
 EndProject
 Global
@@ -79,6 +81,10 @@ Global
 		{3FEC61DD-DB22-4D26-B8EA-21DA0898374A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3FEC61DD-DB22-4D26-B8EA-21DA0898374A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3FEC61DD-DB22-4D26-B8EA-21DA0898374A}.Release|Any CPU.Build.0 = Release|Any CPU
+        {BC7E49A2-96B2-4E1B-9F2B-55E94E7D1E4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {BC7E49A2-96B2-4E1B-9F2B-55E94E7D1E4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {BC7E49A2-96B2-4E1B-9F2B-55E94E7D1E4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {BC7E49A2-96B2-4E1B-9F2B-55E94E7D1E4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,6 +93,7 @@ Global
 		{F15707C9-86D2-4D30-BD1B-672487F7D3AC} = {C9849C01-AD0F-437C-B6E8-5B627335F8EE}
 		{1EDAC0F0-A080-45D5-9D56-9B2070AA7404} = {C9849C01-AD0F-437C-B6E8-5B627335F8EE}
 		{C0F78DDD-C753-432C-8E1B-F88A2DB459FD} = {C9849C01-AD0F-437C-B6E8-5B627335F8EE}
+		{BC7E49A2-96B2-4E1B-9F2B-55E94E7D1E4B} = {C9849C01-AD0F-437C-B6E8-5B627335F8EE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {46E0200E-E65A-469F-9BC8-971E5875A972}
