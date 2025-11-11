@@ -1,19 +1,28 @@
 ﻿@page "/users"
-@inject UserManagement.Blazor.Services.IUsersClient UsersClient
+@inject Services.IUsersClient UsersClient
 
 <PageTitle>Users</PageTitle>
 
 <h1>Users</h1>
 
-@if (_loading)
+<div class="mb-3">
+    <label for="userFilter" class="form-label">Filter</label>
+    <select id="userFilter" class="form-select" @onchange="OnFilterChanged" value="@selectedFilter">
+        <option value="All">All users</option>
+        <option value="Active">Active users</option>
+        <option value="Inactive">Inactive users</option>
+    </select>
+</div>
+
+@if (loading)
 {
     <p>Loading...</p>
 }
-else if (!string.IsNullOrEmpty(_error))
+else if (!string.IsNullOrEmpty(error))
 {
-    <div class="alert alert-danger" role="alert">@_error</div>
+    <div class="alert alert-danger" role="alert">@error</div>
 }
-else if (_users?.Items?.Count > 0)
+else if (users?.Items?.Count > 0)
 {
     <div class="table-responsive">
         <table class="table table-striped">
@@ -27,7 +36,7 @@ else if (_users?.Items?.Count > 0)
             </tr>
             </thead>
             <tbody>
-            @foreach (var u in _users.Items)
+            @foreach (var u in users.Items)
             {
                 <tr>
                     <td>@u.Id</td>
@@ -56,23 +65,44 @@ else
 }
 
 @code {
-    private bool _loading = true;
-    private string? _error;
-    private UserManagement.Shared.DTOs.UserListDto? _users;
+    private bool loading = true;
+    private string? error;
+    private Shared.DTOs.UserListDto? users;
+    private string selectedFilter = "All";
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadUsersAsync();
+    }
+
+    private async Task OnFilterChanged(ChangeEventArgs e)
+    {
+        selectedFilter = e.Value?.ToString() ?? "All";
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        loading = true;
+        error = null;
         try
         {
-            _users = await UsersClient.GetUsersAsync();
+            users = selectedFilter switch
+            {
+                "Active" => await UsersClient.GetUsersByActiveAsync(true),
+                "Inactive" => await UsersClient.GetUsersByActiveAsync(false),
+                _ => await UsersClient.GetUsersAsync()
+            };
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            error = ex.Message;
+            users = new Shared.DTOs.UserListDto([]);
         }
         finally
         {
-            _loading = false;
+            loading = false;
+            StateHasChanged();
         }
     }
 }

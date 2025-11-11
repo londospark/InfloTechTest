@@ -5,4 +5,5 @@ namespace UserManagement.Blazor.Services;
 public interface IUsersClient
 {
     Task<UserListDto> GetUsersAsync(CancellationToken cancellationToken = default);
+    Task<UserListDto> GetUsersByActiveAsync(bool isActive, CancellationToken cancellationToken = default);
 }

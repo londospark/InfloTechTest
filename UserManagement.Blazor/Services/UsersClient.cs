@@ -10,4 +10,11 @@ public sealed class UsersClient(HttpClient http) : IUsersClient
         var result = await http.GetFromJsonAsync<UserListDto>("api/users", cancellationToken);
         return result ?? new UserListDto([]);
     }
+
+    public async Task<UserListDto> GetUsersByActiveAsync(bool isActive, CancellationToken cancellationToken = default)
+    {
+        var url = $"api/users/filter?active={isActive.ToString().ToLower()}";
+        var result = await http.GetFromJsonAsync<UserListDto>(url, cancellationToken);
+        return result ?? new UserListDto([]);
+    }
 }
