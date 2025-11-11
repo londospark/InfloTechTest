@@ -20,6 +20,28 @@ public class UserServiceTests
         result.Should().BeSameAs(users);
     }
 
+    [Fact]
+    public void FilterByActive_WhenContextReturnsActiveEntities_MustReturnAllEntities()
+    {
+        var service = CreateService();
+        var users = SetupUsers(isActive: true);
+
+        var result = service.FilterByActive(true);
+
+        result.Should().BeEquivalentTo(users);
+    }
+
+    [Fact]
+    public void FilterByActive_WhenContextReturnsInactiveEntities_MustReturnNoEntities()
+    {
+        var service = CreateService();
+        _ = this.SetupUsers(isActive: false);
+
+        var result = service.FilterByActive(true);
+
+        result.Should().BeEmpty();
+    }
+
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
     {
         var users = new[]
@@ -33,13 +55,13 @@ public class UserServiceTests
             }
         }.AsQueryable();
 
-        _dataContext
+        this.dataContext
             .Setup(s => s.GetAll<User>())
             .Returns(users);
 
         return users;
     }
 
-    private readonly Mock<IDataContext> _dataContext = new();
-    private UserService CreateService() => new(_dataContext.Object);
+    private readonly Mock<IDataContext> dataContext = new();
+    private UserService CreateService() => new(this.dataContext.Object);
 }
