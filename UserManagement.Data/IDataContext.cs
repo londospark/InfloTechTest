@@ -1,32 +1,34 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 
 namespace UserManagement.Data;
 
 public interface IDataContext
 {
     /// <summary>
-    /// Get a list of items
+    /// Gets a queryable collection of all entities of the specified type
     /// </summary>
-    /// <typeparam name="TEntity"></typeparam>
-    /// <returns></returns>
+    /// <typeparam name="TEntity">The type of entities to retrieve</typeparam>
+    /// <returns>A queryable collection of entities</returns>
     IQueryable<TEntity> GetAll<TEntity>() where TEntity : class;
 
     /// <summary>
-    /// Create a new item
+    /// Creates a new entity in the data store
     /// </summary>
-    /// <typeparam name="TEntity"></typeparam>
-    /// <param name="entity"></param>
-    /// <returns></returns>
+    /// <typeparam name="TEntity">The type of entity to create</typeparam>
+    /// <param name="entity">The entity instance to create</param>
     void Create<TEntity>(TEntity entity) where TEntity : class;
 
     /// <summary>
-    /// Uodate an existing item matching the ID
+    /// Updates an existing entity in the data store
     /// </summary>
-    /// <typeparam name="TEntity"></typeparam>
-    /// <param name="entity"></param>
-    /// <returns></returns>
+    /// <typeparam name="TEntity">The type of entity to update</typeparam>
+    /// <param name="entity">The entity instance containing updated values</param>
     void Update<TEntity>(TEntity entity) where TEntity : class;
 
+    /// <summary>
+    /// Deletes an existing entity from the data store
+    /// </summary>
+    /// <typeparam name="TEntity">The type of entity to delete</typeparam>
+    /// <param name="entity">The entity instance to delete</param>
     void Delete<TEntity>(TEntity entity) where TEntity : class;
 }
