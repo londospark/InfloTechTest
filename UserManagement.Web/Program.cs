@@ -5,6 +5,7 @@ using UserManagement.Data.Extensions;
 using UserManagement.ServiceDefaults;
 using UserManagement.Services.Extensions;
 using Westwind.AspNetCore.Markdown;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services
+    .AddOpenApi()
     .AddDomainServices()
     .AddMarkdown()
     .AddControllers();
@@ -38,6 +40,12 @@ builder.Services.AddCors(o =>
 });
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
 
 app.MapDefaultEndpoints();
 

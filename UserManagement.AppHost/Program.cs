@@ -7,12 +7,14 @@ var database = builder.AddSqlServer("SQL-Server")
 var api = builder.AddProject<Projects.UserManagement_Web>("API")
     .WithUrlForEndpoint("https", url => url.DisplayText = "Home")
     .WithUrlForEndpoint("http", url => url.DisplayText = "Home (http)")
+    .WithUrl("/scalar", "Scalar API Reference")
     .WithReference(database)
     .WaitFor(database);
 
 var frontend = builder.AddProject<Projects.UserManagement_Blazor>("Blazor")
     .WithUrlForEndpoint("https", url => url.DisplayText = "Home")
     .WithReference(api)
+    .WaitFor(api)
     .WithEnvironment("ApiBaseAddress", api.GetEndpoint("https"));
 
 api.WithEnvironment("FrontendOrigin", frontend.GetEndpoint("https"));
