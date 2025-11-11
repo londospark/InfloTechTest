@@ -1,9 +1,8 @@
 ﻿using System.Linq;
-using UserManagement.Services.Domain.Interfaces;
-using UserManagement.Web.Models.Users;
+using UserManagement.Services.Interfaces;
 using UserManagement.Shared.DTOs;
 
-namespace UserManagement.WebMS.Controllers;
+namespace UserManagement.Web.Controllers;
 
 [ApiController]
 [Route("api/users")]

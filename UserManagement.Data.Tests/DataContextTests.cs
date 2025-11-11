@@ -1,6 +1,6 @@
 using System.Linq;
 using FluentAssertions;
-using UserManagement.Models;
+using UserManagement.Data.Entities;
 
 namespace UserManagement.Data.Tests;
 

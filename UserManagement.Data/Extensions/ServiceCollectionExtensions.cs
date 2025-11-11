@@ -1,6 +1,6 @@
-﻿using UserManagement.Data;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace UserManagement.Data.Extensions;
 
 public static class ServiceCollectionExtensions
 {

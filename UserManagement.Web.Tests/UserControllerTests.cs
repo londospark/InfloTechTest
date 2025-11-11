@@ -1,10 +1,9 @@
-using UserManagement.Models;
-using UserManagement.Services.Domain.Interfaces;
+using UserManagement.Data.Entities;
+using UserManagement.Services.Interfaces;
 using UserManagement.Shared.DTOs;
-using UserManagement.Web.Models.Users;
-using UserManagement.WebMS.Controllers;
+using UserManagement.Web.Controllers;
 
-namespace UserManagement.Data.Tests;
+namespace UserManagement.Web.Tests;
 
 public class UserControllerTests
 {
@@ -12,8 +11,8 @@ public class UserControllerTests
     public void List_WhenServiceReturnsUsers_ModelMustContainUsers()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var controller = CreateController();
-        var users = SetupUsers();
+        var controller = this.CreateController();
+        var users = this.SetupUsers();
 
         // Act: Invokes the method under test with the arranged parameters.
         var result = controller.List();
@@ -37,13 +36,13 @@ public class UserControllerTests
             }
         };
 
-        _userService
+        this.userService
             .Setup(s => s.GetAll())
             .Returns(users);
 
         return users;
     }
 
-    private readonly Mock<IUserService> _userService = new();
-    private UsersController CreateController() => new(_userService.Object);
+    private readonly Mock<IUserService> userService = new();
+    private UsersController CreateController() => new(this.userService.Object);
 }

@@ -1,8 +1,9 @@
 using System.Linq;
-using UserManagement.Models;
-using UserManagement.Services.Domain.Implementations;
+using UserManagement.Data;
+using UserManagement.Data.Entities;
+using UserManagement.Services.Implementations;
 
-namespace UserManagement.Data.Tests;
+namespace UserManagement.Services.Tests;
 
 public class UserServiceTests
 {
@@ -10,8 +11,8 @@ public class UserServiceTests
     public void GetAll_WhenContextReturnsEntities_MustReturnSameEntities()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var service = CreateService();
-        var users = SetupUsers();
+        var service = this.CreateService();
+        var users = this.SetupUsers();
 
         // Act: Invokes the method under test with the arranged parameters.
         var result = service.GetAll();
@@ -23,8 +24,8 @@ public class UserServiceTests
     [Fact]
     public void FilterByActive_WhenContextReturnsActiveEntities_MustReturnAllEntities()
     {
-        var service = CreateService();
-        var users = SetupUsers(isActive: true);
+        var service = this.CreateService();
+        var users = this.SetupUsers(isActive: true);
 
         var result = service.FilterByActive(true);
 
@@ -34,7 +35,7 @@ public class UserServiceTests
     [Fact]
     public void FilterByActive_WhenContextReturnsInactiveEntities_MustReturnNoEntities()
     {
-        var service = CreateService();
+        var service = this.CreateService();
         _ = this.SetupUsers(isActive: false);
 
         var result = service.FilterByActive(true);
