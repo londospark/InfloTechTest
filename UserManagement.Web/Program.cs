@@ -12,7 +12,26 @@ builder.Services
     .AddDataAccess()
     .AddDomainServices()
     .AddMarkdown()
-    .AddControllersWithViews();
+    .AddControllers();
+
+var corsPolicyName = "AllowFrontend";
+
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy(corsPolicyName, p =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+        }
+        else
+        {
+            p.AllowAnyHeader().AllowAnyMethod().WithOrigins(
+                builder.Configuration["FrontendOrigin"] ?? "http://localhost:0"
+            );
+        }
+    });
+});
 
 var app = builder.Build();
 
@@ -22,11 +41,11 @@ app.UseMarkdown();
 
 app.UseHsts();
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
 app.UseRouting();
 app.UseAuthorization();
 
-app.MapDefaultControllerRoute();
+app.UseCors(corsPolicyName);
+app.MapControllers();
 
 app.Run();

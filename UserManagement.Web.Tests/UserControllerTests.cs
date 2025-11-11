@@ -1,5 +1,6 @@
 using UserManagement.Models;
 using UserManagement.Services.Domain.Interfaces;
+using UserManagement.Shared.DTOs;
 using UserManagement.Web.Models.Users;
 using UserManagement.WebMS.Controllers;
 
@@ -18,8 +19,8 @@ public class UserControllerTests
         var result = controller.List();
 
         // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Model
-            .Should().BeOfType<UserListViewModel>()
+        result.Value
+            .Should().BeOfType<UserListDto>()
             .Which.Items.Should().BeEquivalentTo(users);
     }
 

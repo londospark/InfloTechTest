@@ -1,0 +1,78 @@
+﻿@page "/users"
+@inject UserManagement.Blazor.Services.IUsersClient UsersClient
+
+<PageTitle>Users</PageTitle>
+
+<h1>Users</h1>
+
+@if (_loading)
+{
+    <p>Loading...</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+else if (_users?.Items?.Count > 0)
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>Forename</th>
+                <th>Surname</th>
+                <th>Email</th>
+                <th>Active</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var u in _users.Items)
+            {
+                <tr>
+                    <td>@u.Id</td>
+                    <td>@u.Forename</td>
+                    <td>@u.Surname</td>
+                    <td>@u.Email</td>
+                    <td>
+                        @if (u.IsActive)
+                        {
+                            <span class="badge bg-success">Yes</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p>No users found.</p>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private UserManagement.Shared.DTOs.UserListDto? _users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _users = await UsersClient.GetUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

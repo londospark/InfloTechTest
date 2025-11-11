@@ -16,6 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\UserManagement.Blazor\UserManagement.Blazor.csproj" />
       <ProjectReference Include="..\UserManagement.Web\UserManagement.Web.csproj" />
     </ItemGroup>
 
