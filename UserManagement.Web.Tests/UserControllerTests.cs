@@ -1,5 +1,7 @@
+using System.Linq;
+using UserManagement.Data;
 using UserManagement.Data.Entities;
-using UserManagement.Services.Interfaces;
+using UserManagement.Services.Implementations;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Controllers;
 
@@ -49,7 +51,7 @@ public class UserControllerTests
             .Which.Items.Should().BeEquivalentTo(users);
     }
     
-    private User[] SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
+    private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
     {
         var users = new[]
         {
@@ -60,19 +62,15 @@ public class UserControllerTests
                 Email = email,
                 IsActive = isActive
             }
-        };
+        }.AsQueryable();
 
-        this.userService
-            .Setup(s => s.GetAll())
-            .Returns(users);
-
-        this.userService
-            .Setup(s => s.FilterByActive(isActive))
+        this.dataContext
+            .Setup(s => s.GetAll<User>())
             .Returns(users);
 
         return users;
     }
 
-    private readonly Mock<IUserService> userService = new();
-    private UsersController CreateController() => new(this.userService.Object);
+    private readonly Mock<IDataContext> dataContext = new();
+    private UsersController CreateController() => new(new UserService(this.dataContext.Object));
 }
