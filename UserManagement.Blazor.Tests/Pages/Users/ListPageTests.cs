@@ -11,7 +11,7 @@ using Xunit;
 
 namespace UserManagement.Blazor.Tests.Pages.Users;
 
-public class ListPageTests : TestContext
+public class ListPageTests : BunitContext
 {
     private readonly Mock<IUsersClient> _usersClient = new();
 
@@ -34,7 +34,7 @@ public class ListPageTests : TestContext
             });
 
         // Act
-        var cut = RenderComponent<List>();
+        var cut = Render<List>();
 
         // Assert: initial Loading... shown before task completes
         cut.Markup.Should().Contain("Loading...");
@@ -54,7 +54,7 @@ public class ListPageTests : TestContext
             .ReturnsAsync(users);
 
         // Act
-        var cut = RenderComponent<List>();
+        var cut = Render<List>();
         await cut.InvokeAsync(() => Task.CompletedTask); // allow render cycle
 
         // Assert
@@ -73,7 +73,7 @@ public class ListPageTests : TestContext
             .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
 
         // Act
-        var cut = RenderComponent<List>();
+        var cut = Render<List>();
         await cut.InvokeAsync(() => Task.CompletedTask);
 
         // Assert
@@ -93,7 +93,7 @@ public class ListPageTests : TestContext
             .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
 
         // Act
-        var cut = RenderComponent<List>();
+        var cut = Render<List>();
         await cut.InvokeAsync(() => Task.CompletedTask);
 
         // Change select to Active
@@ -114,7 +114,7 @@ public class ListPageTests : TestContext
             .ThrowsAsync(new InvalidOperationException("Boom"));
 
         // Act
-        var cut = RenderComponent<List>();
+        var cut = Render<List>();
         await cut.InvokeAsync(() => Task.CompletedTask);
 
         // Assert
