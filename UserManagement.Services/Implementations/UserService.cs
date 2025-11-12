@@ -17,4 +17,10 @@ public class UserService(IDataContext dataAccess) : IUserService
         dataAccess.GetAll<User>().Where(u => u.IsActive == isActive);
 
     public IEnumerable<User> GetAll() => dataAccess.GetAll<User>();
+
+    public User Add(User user)
+    {
+        dataAccess.Create(user);
+        return user;
+    }
 }

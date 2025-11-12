@@ -6,4 +6,6 @@ public interface IUsersClient
 {
     Task<UserListDto> GetUsersAsync(CancellationToken cancellationToken = default);
     Task<UserListDto> GetUsersByActiveAsync(bool isActive, CancellationToken cancellationToken = default);
+
+    Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, CancellationToken cancellationToken = default);
 }

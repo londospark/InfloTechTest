@@ -27,6 +27,23 @@ public class UsersController(IUserService userService) : ControllerBase
         return dto;
     }
 
+    [HttpPost]
+    public ActionResult<UserListItemDto> Create([FromBody] CreateUserRequestDto request)
+    {
+        var user = new User
+        {
+            Forename = request.Forename,
+            Surname = request.Surname,
+            Email = request.Email,
+            IsActive = request.IsActive,
+            DateOfBirth = request.DateOfBirth
+        };
+
+        var created = userService.Add(user);
+        var dto = Mappers.Map(created);
+        return dto;
+    }
+
 }
 
 public static class Mappers

@@ -13,3 +13,12 @@ public sealed record UserListItemDto(
     bool IsActive,
     DateTime DateOfBirth
 );
+
+// Request DTO for creating a new user
+public sealed record CreateUserRequestDto(
+    string Forename,
+    string Surname,
+    string Email,
+    DateTime DateOfBirth,
+    bool IsActive
+);

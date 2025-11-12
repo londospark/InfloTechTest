@@ -12,4 +12,9 @@ public interface IUserService
     /// <returns></returns>
     IEnumerable<User> FilterByActive(bool isActive);
     IEnumerable<User> GetAll();
+
+    /// <summary>
+    /// Add a new user to the data store and return the created entity
+    /// </summary>
+    User Add(User user);
 }

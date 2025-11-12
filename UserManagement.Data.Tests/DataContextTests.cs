@@ -45,8 +45,13 @@ public class DataContextTests
         result.Should().NotContain(s => s.Email == entity.Email);
     }
 
-    private static DataContext CreateContext() =>
-        new(new DbContextOptionsBuilder<DataContext>()
+    private static DataContext CreateContext()
+    {
+        var ctx = new DataContext(new DbContextOptionsBuilder<DataContext>()
             .UseInMemoryDatabase($"UserManagement.Tests.{Guid.NewGuid()}")
             .Options);
+        // Ensure the in-memory database is created so HasData seeding applies in tests
+        ctx.Database.EnsureCreated();
+        return ctx;
+    }
 }

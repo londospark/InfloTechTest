@@ -17,4 +17,12 @@ public sealed class UsersClient(HttpClient http) : IUsersClient
         var result = await http.GetFromJsonAsync<UserListDto>(url, cancellationToken);
         return result ?? new UserListDto([]);
     }
+
+    public async Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var resp = await http.PostAsJsonAsync("api/users", request, cancellationToken);
+        resp.EnsureSuccessStatusCode();
+        var dto = await resp.Content.ReadFromJsonAsync<UserListItemDto>(cancellationToken: cancellationToken);
+        return dto!;
+    }
 }
