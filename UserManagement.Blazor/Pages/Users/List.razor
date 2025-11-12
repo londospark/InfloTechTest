@@ -32,6 +32,7 @@ else if (users?.Items?.Count > 0)
                 <th>Forename</th>
                 <th>Surname</th>
                 <th>Email</th>
+                <th>Date of Birth</th>
                 <th>Active</th>
             </tr>
             </thead>
@@ -43,6 +44,7 @@ else if (users?.Items?.Count > 0)
                     <td>@u.Forename</td>
                     <td>@u.Surname</td>
                     <td>@u.Email</td>
+                    <td>@u.DateOfBirth.ToString("yyyy-MM-dd")</td>
                     <td>
                         @if (u.IsActive)
                         {

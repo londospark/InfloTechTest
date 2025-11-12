@@ -44,7 +44,7 @@ public class UsersClientTests
         {
             captured = req;
             // Return a simple valid payload
-            var payload = new UserListDto(new[] { new UserListItemDto(1, "A", "B", "a@b.com", true) });
+            var payload = new UserListDto(new[] { new UserListItemDto(1, "A", "B", "a@b.com", true, new DateTime(2000,1,1)) });
             var resp = new HttpResponseMessage(HttpStatusCode.OK);
             resp.Content = JsonContent.Create(payload);
             return resp;

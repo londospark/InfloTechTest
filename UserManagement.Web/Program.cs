@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using UserManagement.Data.Extensions;
 using UserManagement.ServiceDefaults;
 using UserManagement.Services.Extensions;
-using Westwind.AspNetCore.Markdown;
 using Scalar.AspNetCore;
+using UserManagement.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,6 @@ builder.AddServiceDefaults();
 builder.Services
     .AddOpenApi()
     .AddDomainServices()
-    .AddMarkdown()
     .AddControllers();
 
 builder.AddDataAccess();
@@ -47,9 +47,16 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.MapDefaultEndpoints();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+    if (db.Database.IsRelational())
+        db.Database.Migrate();
+    else
+        db.Database.EnsureCreated();
+}
 
-app.UseMarkdown();
+app.MapDefaultEndpoints();
 
 app.UseHsts();
 app.UseHttpsRedirection();

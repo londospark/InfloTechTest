@@ -36,6 +36,7 @@ public static class Mappers
         user.Forename,
         user.Surname,
         user.Email,
-        user.IsActive
+        user.IsActive,
+        user.DateOfBirth
     );
 }

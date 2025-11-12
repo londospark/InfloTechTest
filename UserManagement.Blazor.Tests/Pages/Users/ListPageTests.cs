@@ -41,13 +41,14 @@ public class ListPageTests : BunitContext
     }
 
     [Fact]
-    public async Task RendersUsersTable_WhenUsersReturned()
+    public async Task RendersUsersTable_WhenUsersReturned_IncludingDateOfBirth()
     {
         // Arrange
         RegisterServices();
+        var dob = new DateTime(1990, 1, 1);
         var users = new UserListDto(new[]
         {
-            new UserListItemDto(1, "John", "Doe", "john@example.com", true)
+            new UserListItemDto(1, "John", "Doe", "john@example.com", true, dob)
         });
         _usersClient
             .Setup(c => c.GetUsersAsync(default))
@@ -61,6 +62,8 @@ public class ListPageTests : BunitContext
         cut.Markup.Should().Contain("Users");
         cut.Markup.Should().Contain("john@example.com");
         cut.FindAll("table tbody tr").Count.Should().Be(1);
+        // Expect the date of birth to be displayed in ISO format by default
+        cut.Markup.Should().Contain("1990-01-01");
     }
 
     [Fact]

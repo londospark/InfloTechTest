@@ -1,4 +1,6 @@
-﻿namespace UserManagement.Shared.DTOs;
+﻿using System;
+
+namespace UserManagement.Shared.DTOs;
 
 // Immutable DTOs shared between Web API and Blazor client
 public sealed record UserListDto(IReadOnlyList<UserListItemDto> Items);
@@ -8,5 +10,6 @@ public sealed record UserListItemDto(
     string? Forename,
     string? Surname,
     string? Email,
-    bool IsActive
+    bool IsActive,
+    DateTime DateOfBirth
 );

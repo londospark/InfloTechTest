@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
@@ -51,8 +52,9 @@ public class UserControllerTests
             .Which.Items.Should().BeEquivalentTo(users);
     }
     
-    private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
+    private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
     {
+        dateOfBirth ??= new DateTime(1990, 1, 1);
         var users = new[]
         {
             new User
@@ -60,7 +62,8 @@ public class UserControllerTests
                 Forename = forename,
                 Surname = surname,
                 Email = email,
-                IsActive = isActive
+                IsActive = isActive,
+                DateOfBirth = dateOfBirth.Value
             }
         }.AsQueryable();
 
