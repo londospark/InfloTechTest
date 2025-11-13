@@ -6,7 +6,7 @@ using Xunit;
 
 namespace UserManagement.Blazor.Tests.Components;
 
-public class ConfirmDialogTests : TestContext
+public class ConfirmDialogTests : BunitContext
 {
     [Fact]
     public void Renders_WithModalAboveBackdrop_UsingHigherZIndex()

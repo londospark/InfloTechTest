@@ -6,6 +6,7 @@ using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace UserManagement.Web.Controllers;
 
@@ -21,7 +22,7 @@ namespace UserManagement.Web.Controllers;
 [Route("api/users")]
 [Tags("Users")]
 [Produces("application/json")]
-public class UsersController(IUserService userService) : ControllerBase
+public class UsersController(IUserService userService, ILogger<UsersController> logger) : ControllerBase
 {
     /// <summary>
     /// Validates a Create/Update user request using data annotations and prepares a problem details
@@ -64,9 +65,11 @@ public class UsersController(IUserService userService) : ControllerBase
     [ProducesResponseType(typeof(UserListDto), StatusCodes.Status200OK)]
     public ActionResult<UserListDto> List()
     {
+        logger.LogInformation("Listing all users");
         var items = userService.GetAll().Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
+        logger.LogInformation("Listed all users. Count: {Count}", dto.Items.Count);
         return Ok(dto);
     }
 
@@ -83,9 +86,11 @@ public class UsersController(IUserService userService) : ControllerBase
     [ProducesResponseType(typeof(UserListDto), StatusCodes.Status200OK)]
     public ActionResult<UserListDto> ListByActive([FromQuery(Name = "active")] bool isActive)
     {
+        logger.LogInformation("Listing users by active filter. Active: {IsActive}", isActive);
         var items = userService.FilterByActive(isActive).Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
+        logger.LogInformation("Listed users by active filter. Active: {IsActive}. Count: {Count}", isActive, dto.Items.Count);
         return Ok(dto);
     }
 
@@ -101,10 +106,15 @@ public class UsersController(IUserService userService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<UserListItemDto> GetById(long id)
     {
+        logger.LogInformation("Getting user by id {UserId}", id);
         var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
         if (entity is null)
+        {
+            logger.LogWarning("User not found for id {UserId}", id);
             return NotFound();
+        }
 
+        logger.LogInformation("Retrieved user id {UserId}", id);
         return Ok(entity.Map());
     }
 
@@ -126,11 +136,17 @@ public class UsersController(IUserService userService) : ControllerBase
     public ActionResult<UserListItemDto> Update(long id, [FromBody] CreateUserRequestDto request)
     {
         if (!TryValidateRequest(request, out var problem))
+        {
+            logger.LogWarning("Update validation failed for user id {UserId}. Errors: {Errors}", id, problem?.Errors);
             return BadRequest(problem);
+        }
 
         var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
         if (entity is null)
+        {
+            logger.LogWarning("Cannot update. User not found for id {UserId}", id);
             return NotFound();
+        }
 
         var changed = false;
         if (!string.Equals(entity.Forename, request.Forename, StringComparison.Ordinal))
@@ -144,7 +160,13 @@ public class UsersController(IUserService userService) : ControllerBase
         if (entity.DateOfBirth != request.DateOfBirth)
         { entity.DateOfBirth = request.DateOfBirth; changed = true; }
 
+        if (!changed)
+        {
+            logger.LogInformation("No changes detected for user id {UserId}. Skipping update.", id);
+        }
+
         var updated = changed ? userService.Update(entity) : entity;
+        logger.LogInformation("Updated user id {UserId}. Changes applied: {Changed}", id, changed);
         return Ok(updated.Map());
     }
 
@@ -163,7 +185,10 @@ public class UsersController(IUserService userService) : ControllerBase
     public ActionResult<UserListItemDto> Create([FromBody] CreateUserRequestDto request)
     {
         if (!TryValidateRequest(request, out var problem))
+        {
+            logger.LogWarning("Create user validation failed. Errors: {Errors}", problem?.Errors);
             return BadRequest(problem);
+        }
 
         var user = new User
         {
@@ -174,7 +199,9 @@ public class UsersController(IUserService userService) : ControllerBase
             DateOfBirth = request.DateOfBirth
         };
 
-        var dto = userService.Add(user).Map();
+        var added = userService.Add(user);
+        var dto = added.Map();
+        logger.LogInformation("Created user id {UserId} with email {Email}", dto.Id, dto.Email);
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
@@ -190,9 +217,14 @@ public class UsersController(IUserService userService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult Delete(long id)
     {
+        logger.LogInformation("Deleting user id {UserId}", id);
         var deleted = userService.Delete(id);
         if (!deleted)
+        {
+            logger.LogWarning("Cannot delete. User not found for id {UserId}", id);
             return NotFound();
+        }
+        logger.LogInformation("Deleted user id {UserId}", id);
         return NoContent();
     }
 

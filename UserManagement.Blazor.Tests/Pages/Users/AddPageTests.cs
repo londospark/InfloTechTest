@@ -10,7 +10,7 @@ using Xunit;
 
 namespace UserManagement.Blazor.Tests.Pages.Users;
 
-public class AddPageTests : TestContext
+public class AddPageTests : BunitContext
 {
     private readonly Mock<IUsersClient> client = new();
 

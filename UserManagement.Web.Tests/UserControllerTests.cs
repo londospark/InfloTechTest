@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
@@ -60,7 +62,8 @@ public class UserControllerTests
     public void Create_WhenValidRequest_Returns201CreatedWithLocationAndBody()
     {
         // Arrange
-        var controller = this.CreateController();
+        var logger = new Mock<ILogger<UsersController>>();
+        var controller = this.CreateController(logger.Object);
         var req = new CreateUserRequestDto(
             "Jane",
             "Doe",
@@ -98,13 +101,17 @@ public class UserControllerTests
             u.IsActive == req.IsActive &&
             u.DateOfBirth == req.DateOfBirth
         )), Times.Once);
+
+        // And a log was written for creation
+        VerifyLogContains(logger, LogLevel.Information, "Created user id");
     }
 
     [Fact]
     public void Create_WhenInvalidRequest_ReturnsBadRequestAndDoesNotPersist()
     {
         // Arrange: invalid Forename (empty). Provide other valid fields
-        var controller = this.CreateController();
+        var logger = new Mock<ILogger<UsersController>>();
+        var controller = this.CreateController(logger.Object);
         var req = new CreateUserRequestDto(
             "", // invalid
             "Doe",
@@ -123,6 +130,9 @@ public class UserControllerTests
 
         // And no persistence should occur
         this.dataContext.Verify(dc => dc.Create(It.IsAny<User>()), Times.Never);
+
+        // And a warning was logged
+        VerifyLogContains(logger, LogLevel.Warning, "Create user validation failed");
     }
 
     [Fact]
@@ -170,19 +180,24 @@ public class UserControllerTests
     [Fact]
     public void GetById_WhenMissing_Returns404()
     {
-        var controller = this.CreateController();
+        var logger = new Mock<ILogger<UsersController>>();
+        var controller = this.CreateController(logger.Object);
         _ = this.SetupUsers();
 
         var result = controller.GetById(999);
 
         result.Result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
+
+        // Warning logged for not found
+        VerifyLogContains(logger, LogLevel.Warning, "User not found for id");
     }
 
     [Fact]
     public void Delete_WhenFound_ReturnsNoContent()
     {
         // Arrange
-        var controller = this.CreateController();
+        var logger = new Mock<ILogger<UsersController>>();
+        var controller = this.CreateController(logger.Object);
         var users = this.SetupUsers();
         users.First().Id = 5;
 
@@ -192,6 +207,10 @@ public class UserControllerTests
         // Assert
         result.Should().BeOfType<NoContentResult>().Which.StatusCode.Should().Be(204);
         this.dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u.Id == 5)), Times.Once);
+
+        // Information logs for delete flow
+        VerifyLogContains(logger, LogLevel.Information, "Deleting user id");
+        VerifyLogContains(logger, LogLevel.Information, "Deleted user id");
     }
 
     [Fact]
@@ -232,5 +251,17 @@ public class UserControllerTests
     }
 
     private readonly Mock<IDataContext> dataContext = new();
-    private UsersController CreateController() => new(new UserService(this.dataContext.Object));
+    private UsersController CreateController(ILogger<UsersController>? logger = null)
+        => new(new UserService(this.dataContext.Object), logger ?? new NullLogger<UsersController>());
+
+    private static void VerifyLogContains(Mock<ILogger<UsersController>> logger, LogLevel level, string contains)
+    {
+        logger.Verify(l => l.Log(
+                It.Is<LogLevel>(ll => ll == level),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains(contains)),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+            ), Times.AtLeastOnce);
+    }
 }
