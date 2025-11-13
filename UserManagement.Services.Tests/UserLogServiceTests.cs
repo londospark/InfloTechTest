@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
+using MockQueryable;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
@@ -22,18 +24,18 @@ public class UserLogServiceTests
     }
 
     [Fact]
-    public void Add_WhenCalled_CreatesAndReturnsEntity()
+    public async Task AddAsync_WhenCalled_CreatesAndReturnsEntity()
     {
         // Arrange
         var service = CreateService();
         var log = new UserLog { UserId = 1, Message = "Created", CreatedAt = System.DateTime.UtcNow };
 
         // Act
-        var result = service.Add(log);
+        var result = await service.AddAsync(log);
 
         // Assert
         result.Should().BeSameAs(log);
-        dataContext.Verify(dc => dc.Create(It.Is<UserLog>(l => l == log)), Times.Once);
+        dataContext.Verify(dc => dc.CreateAsync(It.Is<UserLog>(l => l == log)), Times.Once);
     }
 
     [Fact]
@@ -74,13 +76,14 @@ public class UserLogServiceTests
                 Message = message,
                 CreatedAt = setCreated ? System.DateTime.UtcNow : default
             }
-        }.AsQueryable();
+        };
 
+        var mockQueryable = logs.BuildMock();
         dataContext
             .Setup(s => s.GetAll<UserLog>())
-            .Returns(logs);
+            .Returns(mockQueryable);
 
-        return logs;
+        return mockQueryable;
     }
 
     private readonly Mock<IDataContext> dataContext = new();

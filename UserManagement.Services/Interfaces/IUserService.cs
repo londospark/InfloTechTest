@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using UserManagement.Data.Entities;
 
 namespace UserManagement.Services.Interfaces;
@@ -6,41 +7,31 @@ namespace UserManagement.Services.Interfaces;
 public interface IUserService
 {
     /// <summary>
-    /// Return users by active state
+    /// Return users by active state as a queryable for async enumeration
     /// </summary>
-    /// <param name="isActive"></param>
-    /// <returns></returns>
-    IEnumerable<User> FilterByActive(bool isActive);
+    IQueryable<User> FilterByActive(bool isActive);
 
     /// <summary>
-    /// Retrieves all users from the underlying data store.
+    /// Retrieves all users as a queryable collection.
     /// </summary>
     /// <remarks>
-    /// The returned sequence is typically backed by the data provider (e.g., EF Core)
-    /// and will be evaluated on enumeration. Consumers may further filter or project
-    /// the results; however, prefer using dedicated service methods when applying
-    /// domain-specific rules.
+    /// Returns an IQueryable that can be further filtered, sorted, or projected.
+    /// The query will be executed when enumerated using async methods like ToListAsync.
     /// </remarks>
-    /// <returns>
-    /// An enumerable sequence of all <see cref="User"/> entities available in the data store.
-    /// </returns>
-    IEnumerable<User> GetAll();
+    IQueryable<User> GetAll();
 
     /// <summary>
-    /// Add a new user to the data store and return the created entity
+    /// Add a new user asynchronously
     /// </summary>
-    User Add(User user);
+    Task<User> AddAsync(User user);
 
     /// <summary>
-    /// Update an existing user in the data store and return the updated entity.
+    /// Update a user asynchronously
     /// </summary>
-    /// <param name="user">User entity with updated values. Must already exist.</param>
-    /// <returns>The same user instance after the update operation.</returns>
-    User Update(User user);
+    Task<User> UpdateAsync(User user);
 
     /// <summary>
-    /// Delete a user by id.
-    /// Returns true when found and deleted; false when not found.
+    /// Delete a user by id asynchronously
     /// </summary>
-    bool Delete(long id);
+    Task<bool> DeleteAsync(long id);
 }

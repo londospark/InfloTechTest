@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Microsoft.AspNetCore.SignalR;
@@ -106,7 +107,8 @@ public sealed class DatabaseLogger<T>(ILoggerFactory loggerFactory, IServiceScop
 			CreatedAt = DateTime.UtcNow
 		};
 
-		userLogService.Add(log);
+		// Call async method synchronously since Log is a synchronous interface method
+		userLogService.AddAsync(log).GetAwaiter().GetResult();
 
 		// If SignalR hub is registered, publish an event for the specific user.
 		var hubContext = scope.ServiceProvider.GetService<IHubContext<UserLogsHub>>();

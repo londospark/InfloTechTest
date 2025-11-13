@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
@@ -13,29 +13,29 @@ public class UserService(IDataContext dataAccess) : IUserService
     /// </summary>
     /// <param name="isActive"></param>
     /// <returns></returns>
-    public IEnumerable<User> FilterByActive(bool isActive) =>
+    public IQueryable<User> FilterByActive(bool isActive) =>
         dataAccess.GetAll<User>().Where(u => u.IsActive == isActive);
 
-    public IEnumerable<User> GetAll() => dataAccess.GetAll<User>();
+    public IQueryable<User> GetAll() => dataAccess.GetAll<User>();
 
-    public User Add(User user)
+    public async Task<User> AddAsync(User user)
     {
-        dataAccess.Create(user);
+        await dataAccess.CreateAsync(user);
         return user;
     }
 
-    public User Update(User user)
+    public async Task<User> UpdateAsync(User user)
     {
-        dataAccess.Update(user);
+        await dataAccess.UpdateAsync(user);
         return user;
     }
 
-    public bool Delete(long id)
+    public async Task<bool> DeleteAsync(long id)
     {
         var entity = dataAccess.GetAll<User>().FirstOrDefault(u => u.Id == id);
         if (entity is null)
             return false;
-        dataAccess.Delete(entity);
+        await dataAccess.DeleteAsync(entity);
         return true;
     }
 }

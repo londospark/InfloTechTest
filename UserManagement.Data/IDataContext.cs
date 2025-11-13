@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 
 namespace UserManagement.Data;
 
@@ -31,4 +32,21 @@ public interface IDataContext
     /// <typeparam name="TEntity">The type of entity to delete</typeparam>
     /// <param name="entity">The entity instance to delete</param>
     void Delete<TEntity>(TEntity entity) where TEntity : class;
+
+    // Async counterparts -------------------------------------------------
+
+    /// <summary>
+    /// Creates a new entity in the data store asynchronously
+    /// </summary>
+    Task CreateAsync<TEntity>(TEntity entity) where TEntity : class;
+
+    /// <summary>
+    /// Updates an existing entity in the data store asynchronously
+    /// </summary>
+    Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class;
+
+    /// <summary>
+    /// Deletes an existing entity from the data store asynchronously
+    /// </summary>
+    Task DeleteAsync<TEntity>(TEntity entity) where TEntity : class;
 }

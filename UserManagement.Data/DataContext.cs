@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using UserManagement.Data.Entities;
 
@@ -34,15 +35,33 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         SaveChanges();
     }
 
+    public async Task CreateAsync<TEntity>(TEntity entity) where TEntity : class
+    {
+        base.Add(entity);
+        await SaveChangesAsync();
+    }
+
     public new void Update<TEntity>(TEntity entity) where TEntity : class
     {
         base.Update(entity);
         SaveChanges();
     }
 
+    public async Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class
+    {
+        base.Update(entity);
+        await SaveChangesAsync();
+    }
+
     public void Delete<TEntity>(TEntity entity) where TEntity : class
     {
         base.Remove(entity);
         SaveChanges();
+    }
+
+    public async Task DeleteAsync<TEntity>(TEntity entity) where TEntity : class
+    {
+        base.Remove(entity);
+        await SaveChangesAsync();
     }
 }

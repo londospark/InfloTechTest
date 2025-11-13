@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
@@ -43,7 +44,7 @@ public class DatabaseLoggerTests
 
         // Debug is not persisted but should be forwarded
         forwardLogger.Verify(f => f.Log(It.Is<LogLevel>(l => l == LogLevel.Debug), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception?>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-        userLogService.Verify(s => s.Add(It.IsAny<UserLog>()), Times.Never);
+        userLogService.Verify(s => s.AddAsync(It.IsAny<UserLog>()), Times.Never);
     }
 
     [Fact]
@@ -98,7 +99,10 @@ public class DatabaseLoggerTests
     private static List<UserLog> CaptureLogs(Mock<IUserLogService> userLogService)
     {
         var logs = new List<UserLog>();
-        userLogService.Setup(s => s.Add(It.IsAny<UserLog>())).Callback<UserLog>(logs.Add);
+        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>())).Callback<UserLog>(log =>
+        {
+            logs.Add(log);
+        }).ReturnsAsync((UserLog log) => log);
         return logs;
     }
 

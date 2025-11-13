@@ -22,7 +22,9 @@ public class DatabaseLoggerSignalRTests
     {
         // Arrange
         var userLogService = new Mock<IUserLogService>();
-        userLogService.Setup(s => s.Add(It.IsAny<UserLog>())).Callback<UserLog>(l => l.Id = 99);
+        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>()))
+            .Callback<UserLog>(l => l.Id = 99)
+            .ReturnsAsync((UserLog l) => l);
 
         var clientProxy = new Mock<IClientProxy>();
         clientProxy.Setup(p => p.SendCoreAsync(
@@ -65,7 +67,7 @@ public class DatabaseLoggerSignalRTests
         }
 
         // Assert
-        userLogService.Verify(s => s.Add(It.Is<UserLog>(l => l.UserId == 42 && l.Message.Contains("Test persist and push"))), Times.Once);
+        userLogService.Verify(s => s.AddAsync(It.Is<UserLog>(l => l.UserId == 42 && l.Message.Contains("Test persist and push"))), Times.Once);
         clientProxy.Verify();
     }
 }

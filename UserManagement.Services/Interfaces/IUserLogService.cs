@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using UserManagement.Data.Entities;
 
 namespace UserManagement.Services.Interfaces;
@@ -6,17 +7,17 @@ namespace UserManagement.Services.Interfaces;
 public interface IUserLogService
 {
     /// <summary>
-    /// Retrieves all user logs from the data store.
+    /// Retrieves all user logs as a queryable collection.
     /// </summary>
-    IEnumerable<UserLog> GetAll();
+    IQueryable<UserLog> GetAll();
 
     /// <summary>
-    /// Add a new user log to the data store and return the created entity.
+    /// Add a new user log asynchronously
     /// </summary>
-    UserLog Add(UserLog log);
+    Task<UserLog> AddAsync(UserLog log);
 
     /// <summary>
-    /// Retrieves all logs associated with a specific user id.
+    /// Retrieves all logs associated with a specific user id as a queryable collection.
     /// </summary>
-    IEnumerable<UserLog> GetByUserId(long userId);
+    IQueryable<UserLog> GetByUserId(long userId);
 }

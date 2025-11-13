@@ -1,4 +1,6 @@
 using System.Linq;
+using System.Threading.Tasks;
+using MockQueryable;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
@@ -44,7 +46,7 @@ public class UserServiceTests
     }
 
     [Fact]
-    public void Delete_WhenUserExists_DeletesAndReturnsTrue()
+    public async Task DeleteAsync_WhenUserExists_DeletesAndReturnsTrue()
     {
         // Arrange
         var service = CreateService();
@@ -52,27 +54,29 @@ public class UserServiceTests
         var existing = users.First();
         existing.Id = 10;
 
+        dataContext.Setup(dc => dc.DeleteAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
+
         // Act
-        var result = service.Delete(10);
+        var result = await service.DeleteAsync(10);
 
         // Assert
         result.Should().BeTrue();
-        dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u == existing)), Times.Once);
+        dataContext.Verify(dc => dc.DeleteAsync(It.Is<User>(u => u == existing)), Times.Once);
     }
 
     [Fact]
-    public void Delete_WhenUserMissing_ReturnsFalseAndDoesNotDelete()
+    public async Task DeleteAsync_WhenUserMissing_ReturnsFalseAndDoesNotDelete()
     {
         // Arrange
         var service = CreateService();
         _ = SetupUsers();
 
         // Act
-        var result = service.Delete(999);
+        var result = await service.DeleteAsync(999);
 
         // Assert
         result.Should().BeFalse();
-        dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
+        dataContext.Verify(dc => dc.DeleteAsync(It.IsAny<User>()), Times.Never);
     }
 
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
@@ -86,13 +90,14 @@ public class UserServiceTests
                 Email = email,
                 IsActive = isActive
             }
-        }.AsQueryable();
+        };
 
+        var mockQueryable = users.BuildMock();
         dataContext
             .Setup(s => s.GetAll<User>())
-            .Returns(users);
+            .Returns(mockQueryable);
 
-        return users;
+        return mockQueryable;
     }
 
     private readonly Mock<IDataContext> dataContext = new();

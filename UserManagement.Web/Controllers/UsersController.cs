@@ -1,7 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
@@ -54,6 +56,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
         problem = null;
         return true;
     }
+
     /// <summary>
     /// Retrieves the full list of users.
     /// </summary>
@@ -63,10 +66,11 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     /// <response code="200">Returns the list of users.</response>
     [HttpGet]
     [ProducesResponseType(typeof(UserListDto), StatusCodes.Status200OK)]
-    public ActionResult<UserListDto> List()
+    public async Task<ActionResult<UserListDto>> List()
     {
         logger.LogInformation("Listing all users");
-        var items = userService.GetAll().Select(Mappers.Map).ToList();
+        var users = await userService.GetAll().ToListAsync();
+        var items = users.Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
         logger.LogInformation("Listed all users. Count: {Count}", dto.Items.Count);
@@ -84,10 +88,11 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     /// <response code="200">Returns the filtered list of users.</response>
     [HttpGet("filter")]
     [ProducesResponseType(typeof(UserListDto), StatusCodes.Status200OK)]
-    public ActionResult<UserListDto> ListByActive([FromQuery(Name = "active")] bool isActive)
+    public async Task<ActionResult<UserListDto>> ListByActive([FromQuery(Name = "active")] bool isActive)
     {
         logger.LogInformation("Listing users by active filter. Active: {IsActive}", isActive);
-        var items = userService.FilterByActive(isActive).Select(Mappers.Map).ToList();
+        var users = await userService.FilterByActive(isActive).ToListAsync();
+        var items = users.Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
         logger.LogInformation("Listed users by active filter. Active: {IsActive}. Count: {Count}", isActive, dto.Items.Count);
@@ -104,11 +109,11 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     [HttpGet("{id:long}")]
     [ProducesResponseType(typeof(UserListItemDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<UserListItemDto> GetById(long id)
+    public async Task<ActionResult<UserListItemDto>> GetById(long id)
     {
         using var scope = BeginUserScope(id);
         logger.LogInformation("Getting user by id {UserId}", id);
-        var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
+        var entity = await userService.GetAll().FirstOrDefaultAsync(u => u.Id == id);
         if (entity is null)
         {
             logger.LogWarning("User not found for id {UserId}", id);
@@ -134,7 +139,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     [ProducesResponseType(typeof(UserListItemDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<UserListItemDto> Update(long id, [FromBody] CreateUserRequestDto request)
+    public async Task<ActionResult<UserListItemDto>> Update(long id, [FromBody] CreateUserRequestDto request)
     {
         using var scope = BeginUserScope(id);
         if (!TryValidateRequest(request, out var problem))
@@ -143,7 +148,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
             return BadRequest(problem);
         }
 
-        var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
+        var entity = await userService.GetAll().FirstOrDefaultAsync(u => u.Id == id);
         if (entity is null)
         {
             logger.LogWarning("Cannot update. User not found for id {UserId}", id);
@@ -167,7 +172,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
             logger.LogInformation("No changes detected for user id {UserId}. Skipping update.", id);
         }
 
-        var updated = changed ? userService.Update(entity) : entity;
+        var updated = changed ? await userService.UpdateAsync(entity) : entity;
         logger.LogInformation("Updated user id {UserId}. Changes applied: {Changed}", id, changed);
         return Ok(updated.Map());
     }
@@ -184,7 +189,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     [Produces("application/json")]
     [ProducesResponseType(typeof(UserListItemDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public ActionResult<UserListItemDto> Create([FromBody] CreateUserRequestDto request)
+    public async Task<ActionResult<UserListItemDto>> Create([FromBody] CreateUserRequestDto request)
     {
         if (!TryValidateRequest(request, out var problem))
         {
@@ -201,7 +206,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
             DateOfBirth = request.DateOfBirth
         };
 
-        var added = userService.Add(user);
+        var added = await userService.AddAsync(user);
         var dto = added.Map();
         using var scope = BeginUserScope(dto.Id);
         logger.LogInformation("Created user id {UserId} with email {Email}", dto.Id, dto.Email);
@@ -218,7 +223,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     /// <response code="200">Returns the paged list of logs.</response>
     [HttpGet("{id:long}/logs")]
     [ProducesResponseType(typeof(PagedResultDto<UserLogDto>), StatusCodes.Status200OK)]
-    public ActionResult<PagedResultDto<UserLogDto>> GetLogs(long id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<ActionResult<PagedResultDto<UserLogDto>>> GetLogs(long id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         using var scope = BeginUserScope(id);
         // Normalize paging inputs
@@ -231,10 +236,11 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
             .GetByUserId(id)
             .OrderByDescending(l => l.CreatedAt);
 
-        var total = logsQuery.Count();
+        var total = await logsQuery.CountAsync();
 
         var skip = (page - 1) * pageSize;
-        var items = logsQuery.Skip(skip).Take(pageSize).Select(Mappers.Map).ToList();
+        var logs = await logsQuery.Skip(skip).Take(pageSize).ToListAsync();
+        var items = logs.Select(Mappers.Map).ToList();
 
         logger.LogInformation("Listing logs for user {UserId}. Page: {Page}, PageSize: {PageSize}, Returned: {Count}", id, page, pageSize, items.Count);
 
@@ -252,11 +258,11 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     [HttpDelete("{id:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult Delete(long id)
+    public async Task<ActionResult> Delete(long id)
     {
         using var scope = BeginUserScope(id);
         logger.LogInformation("Deleting user id {UserId}", id);
-        var deleted = userService.Delete(id);
+        var deleted = await userService.DeleteAsync(id);
         if (!deleted)
         {
             logger.LogWarning("Cannot delete. User not found for id {UserId}", id);

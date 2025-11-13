@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
@@ -8,14 +8,14 @@ namespace UserManagement.Services.Implementations;
 
 public class UserLogService(IDataContext dataAccess) : IUserLogService
 {
-    public IEnumerable<UserLog> GetAll() => dataAccess.GetAll<UserLog>();
+    public IQueryable<UserLog> GetAll() => dataAccess.GetAll<UserLog>();
 
-    public UserLog Add(UserLog log)
+    public async Task<UserLog> AddAsync(UserLog log)
     {
-        dataAccess.Create(log);
+        await dataAccess.CreateAsync(log);
         return log;
     }
 
-    public IEnumerable<UserLog> GetByUserId(long userId) =>
+    public IQueryable<UserLog> GetByUserId(long userId) =>
         dataAccess.GetAll<UserLog>().Where(l => l.UserId == userId);
 }
