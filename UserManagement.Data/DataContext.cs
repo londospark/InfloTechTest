@@ -8,8 +8,8 @@ namespace UserManagement.Data;
 public class DataContext(DbContextOptions<DataContext> options) : DbContext(options), IDataContext
 {
     protected override void OnModelCreating(ModelBuilder model)
-        => model.Entity<User>().HasData(new[]
-        {
+        => model.Entity<User>().HasData(
+        [
             new User { Id = 1, Forename = "Peter", Surname = "Loew", Email = "ploew@example.com", IsActive = true, DateOfBirth = new(1980, 1, 1) },
             new User { Id = 2, Forename = "Benjamin Franklin", Surname = "Gates", Email = "bfgates@example.com", IsActive = true, DateOfBirth = new(1975, 2, 2) },
             new User { Id = 3, Forename = "Castor", Surname = "Troy", Email = "ctroy@example.com", IsActive = false, DateOfBirth = new(1982, 3, 3) },
@@ -21,7 +21,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             new User { Id = 9, Forename = "Damon", Surname = "Macready", Email = "dmacready@example.com", IsActive = false, DateOfBirth = new(1988, 9, 9) },
             new User { Id = 10, Forename = "Johnny", Surname = "Blaze", Email = "jblaze@example.com", IsActive = true, DateOfBirth = new(1981, 10, 10) },
             new User { Id = 11, Forename = "Robin", Surname = "Feld", Email = "rfeld@example.com", IsActive = true, DateOfBirth = new(1977, 11, 11) },
-        });
+        ]);
 
     public DbSet<User>? Users { get; set; }
     public DbSet<UserLog>? UserLogs { get; set; }
@@ -29,34 +29,16 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public IQueryable<TEntity> GetAll<TEntity>() where TEntity : class
         => base.Set<TEntity>();
 
-    public void Create<TEntity>(TEntity entity) where TEntity : class
-    {
-        base.Add(entity);
-        SaveChanges();
-    }
-
     public async Task CreateAsync<TEntity>(TEntity entity) where TEntity : class
     {
         base.Add(entity);
         await SaveChangesAsync();
     }
 
-    public new void Update<TEntity>(TEntity entity) where TEntity : class
-    {
-        base.Update(entity);
-        SaveChanges();
-    }
-
     public async Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class
     {
         base.Update(entity);
         await SaveChangesAsync();
-    }
-
-    public void Delete<TEntity>(TEntity entity) where TEntity : class
-    {
-        base.Remove(entity);
-        SaveChanges();
     }
 
     public async Task DeleteAsync<TEntity>(TEntity entity) where TEntity : class

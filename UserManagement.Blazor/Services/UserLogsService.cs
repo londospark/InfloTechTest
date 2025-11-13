@@ -30,7 +30,20 @@ public sealed class UserLogsService : IUserLogsService
     public UserLogsService(IUserLogsHubConnection connection)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _connection.On<UserLogDto>("LogAdded", dto => LogReceived?.Invoke(dto));
+        _connection.On<UserLogDto>("LogAdded", dto =>
+        {
+            if (LogReceived != null)
+            {
+                foreach (var handler in LogReceived.GetInvocationList())
+                {
+                    try
+                    {
+                        ((Action<UserLogDto>)handler)(dto);
+                    }
+                    catch { /* Swallow exceptions from handlers */ }
+                }
+            }
+        });
     }
 
     public async Task StartAsync()

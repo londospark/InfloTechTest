@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace UserManagement.Services.Implementations;
 

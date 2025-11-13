@@ -32,7 +32,7 @@ namespace UserManagement.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "DateOfBirth", "Email", "Forename", "IsActive", "Surname" },
+                columns: ["Id", "DateOfBirth", "Email", "Forename", "IsActive", "Surname"],
                 values: new object[,]
                 {
                     { 1L, new DateTime(1980, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "ploew@example.com", "Peter", true, "Loew" },

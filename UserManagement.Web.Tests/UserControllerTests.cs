@@ -214,6 +214,122 @@ public class UserControllerTests
         result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
     }
 
+    [Theory]
+    [InlineData("", "Doe", "jane.doe@example.com", true, "Forename")]
+    [InlineData("Jane", "", "jane.doe@example.com", true, "Surname")]
+    [InlineData("Jane", "Doe", "", true, "Email")]
+    public async Task Create_WithMissingFields_ReturnsBadRequest(string forename, string surname, string email, bool isActive, string expectedErrorField)
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var req = new CreateUserRequestDto(forename, surname, email, new(1992, 5, 10), isActive);
+        var action = await controller.Create(req);
+        var objectResult = action.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(400);
+        objectResult.Value.Should().BeOfType<ValidationProblemDetails>()
+            .Which.Errors.Should().ContainKey(expectedErrorField);
+    }
+
+    [Fact]
+    public async Task Create_WithDuplicateEmail_ReturnsBadRequest()
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var req = new CreateUserRequestDto("Jane", "Doe", "dup@example.com", new(1992, 5, 10), true);
+        await controller.Create(req);
+        var req2 = new CreateUserRequestDto("John", "Smith", "dup@example.com", new(1990, 1, 1), true);
+        var action = await controller.Create(req2);
+        var objectResult = action.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(400);
+        objectResult.Value.Should().BeOfType<ValidationProblemDetails>()
+            .Which.Errors.Should().ContainKey(nameof(CreateUserRequestDto.Email));
+    }
+
+    [Theory]
+    [InlineData("A", "Doe", "a@b.com", true)]
+    [InlineData("JaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJaneJane", "Doe", "a@b.com", true)]
+    public async Task Create_WithMinMaxFieldLengths_Succeeds(string forename, string surname, string email, bool isActive)
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var req = new CreateUserRequestDto(forename, surname, email, new(1992, 5, 10), isActive);
+        var action = await controller.Create(req);
+        var created = action.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        created.StatusCode.Should().Be(201);
+    }
+
+    [Fact]
+    public async Task List_WhenNoUsers_ReturnsEmptyList()
+    {
+        var ctx = CreateContext();
+        // Remove all users to ensure empty DB
+        ctx.Users!.RemoveRange(ctx.Users!);
+        ctx.SaveChanges();
+        var controller = CreateController(ctx);
+        var result = await controller.List();
+        var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var dto = ok.Value.Should().BeOfType<UserListDto>().Which;
+        dto.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Update_WhenValidRequest_UpdatesUser()
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx);
+        var user = users.First();
+        var req = new CreateUserRequestDto("Updated", "User", user.Email, user.DateOfBirth, false);
+        var result = await controller.Update(user.Id, req);
+        var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var dto = ok.Value.Should().BeOfType<UserListItemDto>().Which;
+        dto.Forename.Should().Be("Updated");
+        dto.IsActive.Should().BeFalse();
+        ctx.Users!.Find(user.Id)!.Forename.Should().Be("Updated");
+    }
+
+    [Fact]
+    public async Task Update_WhenUserNotFound_ReturnsNotFound()
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var req = new CreateUserRequestDto("Updated", "User", "notfound@example.com", new(1990, 1, 1), true);
+        var result = await controller.Update(999, req);
+        result.Result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
+    }
+
+    [Fact]
+    public async Task Update_WhenInvalidRequest_ReturnsBadRequest()
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx);
+        var user = users.First();
+        var req = new CreateUserRequestDto("", "User", user.Email, user.DateOfBirth, true);
+        var result = await controller.Update(user.Id, req);
+        var objectResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(400);
+        objectResult.Value.Should().BeOfType<ValidationProblemDetails>()
+            .Which.Errors.Should().ContainKey(nameof(CreateUserRequestDto.Forename));
+    }
+
+    [Fact]
+    public async Task Delete_WithRelatedLogs_DeletesUserAndLogs()
+    {
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx);
+        var user = users.First();
+        // Add a log for the user
+        ctx.UserLogs!.Add(new UserLog { UserId = user.Id, Message = "Test log", CreatedAt = DateTime.UtcNow });
+        ctx.SaveChanges();
+        var result = await controller.Delete(user.Id);
+        result.Should().BeOfType<NoContentResult>().Which.StatusCode.Should().Be(204);
+        ctx.Users!.Any(x => x.Id == user.Id).Should().BeFalse();
+        // Logs should remain for audit trail
+        ctx.UserLogs!.Any(l => l.UserId == user.Id).Should().BeTrue();
+    }
+
     private User[] SetupUsers(DataContext ctx, string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
     {
         dateOfBirth ??= new(1990, 1, 1);
@@ -236,15 +352,15 @@ public class UserControllerTests
 
     private static DataContext CreateContext()
     {
-        // Use SQLite in-memory to better emulate relational behavior
-        var connection = new SqliteConnection("Data Source=:memory:");
+        // Use SQLite in-memory with a unique name per test to ensure isolation
+        var dbName = $"DataSource=file:memdb_{Guid.NewGuid()}?mode=memory&cache=shared";
+        var connection = new SqliteConnection(dbName);
         connection.Open();
 
         var opts = new DbContextOptionsBuilder<DataContext>()
             .UseSqlite(connection)
             .Options;
         var ctx = new DataContext(opts);
-        // Ensure database created and seed data applied
         ctx.Database.EnsureCreated();
         return ctx;
     }

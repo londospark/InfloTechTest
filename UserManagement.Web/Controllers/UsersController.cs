@@ -50,6 +50,7 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
                 ModelState.AddModelError(memberName, vr.ErrorMessage ?? "Validation error");
             }
             problem = new(ModelState);
+            logger.LogWarning("Create user validation failed");
             return false;
         }
 
@@ -192,9 +193,20 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
     public async Task<ActionResult<UserListItemDto>> Create([FromBody] CreateUserRequestDto request)
     {
         if (!TryValidateRequest(request, out var problem))
-        {
-            logger.LogWarning("Create user validation failed. Errors: {Errors}", problem?.Errors);
             return BadRequest(problem);
+
+        // Check for duplicate email (case-insensitive)
+        var existing = await userService.GetAll().FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+        if (existing != null)
+        {
+            var dupProblem = new ValidationProblemDetails
+            {
+                Title = "Validation Error",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = "A user with this email already exists."
+            };
+            dupProblem.Errors[nameof(CreateUserRequestDto.Email)] = ["Email must be unique."];
+            return BadRequest(dupProblem);
         }
 
         var user = new User
@@ -202,15 +214,19 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
             Forename = request.Forename,
             Surname = request.Surname,
             Email = request.Email,
-            IsActive = request.IsActive,
-            DateOfBirth = request.DateOfBirth
+            DateOfBirth = request.DateOfBirth,
+            IsActive = request.IsActive
         };
-
-        var added = await userService.AddAsync(user);
-        var dto = added.Map();
-        using var scope = BeginUserScope(dto.Id);
-        logger.LogInformation("Created user id {UserId} with email {Email}", dto.Id, dto.Email);
-        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+        var created = await userService.AddAsync(user);
+        logger.LogInformation($"Created user id {created.Id} with email {created.Email}");
+        // Persist a user log for audit trail
+        await userLogService.AddAsync(new UserLog {
+            UserId = created.Id,
+            Message = $"Created user id {created.Id}: {created.Forename} {created.Surname} ({created.Email})",
+            CreatedAt = DateTime.UtcNow
+        });
+        var dto = new UserListItemDto(created.Id, created.Forename, created.Surname, created.Email, created.IsActive, created.DateOfBirth);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, dto);
     }
 
     /// <summary>

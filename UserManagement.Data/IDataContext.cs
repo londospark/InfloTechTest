@@ -13,29 +13,6 @@ public interface IDataContext
     IQueryable<TEntity> GetAll<TEntity>() where TEntity : class;
 
     /// <summary>
-    /// Creates a new entity in the data store
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity to create</typeparam>
-    /// <param name="entity">The entity instance to create</param>
-    void Create<TEntity>(TEntity entity) where TEntity : class;
-
-    /// <summary>
-    /// Updates an existing entity in the data store
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity to update</typeparam>
-    /// <param name="entity">The entity instance containing updated values</param>
-    void Update<TEntity>(TEntity entity) where TEntity : class;
-
-    /// <summary>
-    /// Deletes an existing entity from the data store
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity to delete</typeparam>
-    /// <param name="entity">The entity instance to delete</param>
-    void Delete<TEntity>(TEntity entity) where TEntity : class;
-
-    // Async counterparts -------------------------------------------------
-
-    /// <summary>
     /// Creates a new entity in the data store asynchronously
     /// </summary>
     Task CreateAsync<TEntity>(TEntity entity) where TEntity : class;
