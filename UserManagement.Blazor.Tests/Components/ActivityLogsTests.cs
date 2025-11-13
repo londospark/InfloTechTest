@@ -277,7 +277,7 @@ public class ActivityLogsTests : BunitContext
         {
             var logs = new List<UserLogDto>
             {
-                new UserLogDto(1, userId, "Test log message", DateTime.UtcNow.AddMinutes(-5))
+                new(1, userId, "Test log message", DateTime.UtcNow.AddMinutes(-5))
             };
             return Task.FromResult(new PagedResultDto<UserLogDto>(logs, page, pageSize, 1));
         }
@@ -331,8 +331,8 @@ public class ActivityLogsTests : BunitContext
         {
             var logs = new List<UserLogDto>
             {
-                new UserLogDto(1, 1, "User1 Log", DateTime.UtcNow.AddMinutes(-5)),
-                new UserLogDto(2, 2, "User2 Log", DateTime.UtcNow.AddMinutes(-4))
+                new(1, 1, "User1 Log", DateTime.UtcNow.AddMinutes(-5)),
+                new(2, 2, "User2 Log", DateTime.UtcNow.AddMinutes(-4))
             };
 
             var filtered = logs.Where(l => l.UserId == userId).ToList();
@@ -418,7 +418,7 @@ public class ActivityLogsTests : BunitContext
         {
             var logs = new List<UserLogDto>
             {
-                new UserLogDto(1, userId, null, DateTime.UtcNow.AddMinutes(-5))
+                new(1, userId, string.Empty, DateTime.UtcNow.AddMinutes(-5))
             };
             return Task.FromResult(new PagedResultDto<UserLogDto>(logs, page, pageSize, 1));
         }

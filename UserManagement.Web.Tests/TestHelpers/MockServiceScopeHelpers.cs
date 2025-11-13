@@ -44,5 +44,5 @@ public static class MockServiceScopeHelpers
     /// <summary>
     /// Creates a strict mock IServiceScopeFactory that expects no calls (for negative testing)
     /// </summary>
-    public static Mock<IServiceScopeFactory> CreateStrictMockScopeFactory() => new Mock<IServiceScopeFactory>(MockBehavior.Strict);
+    public static Mock<IServiceScopeFactory> CreateStrictMockScopeFactory() => new(MockBehavior.Strict);
 }

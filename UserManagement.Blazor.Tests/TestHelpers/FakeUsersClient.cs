@@ -113,7 +113,7 @@ public sealed class FakeUsersClientWithInvalidLog : FakeUsersClient
     {
         var logs = new List<UserLogDto>
         {
-            new UserLogDto(1, userId, null, DateTime.UtcNow.AddMinutes(-5))
+            new(1, userId, string.Empty, DateTime.UtcNow.AddMinutes(-5))
         };
         return Task.FromResult(new PagedResultDto<UserLogDto>(logs, page, pageSize, 1));
     }
@@ -142,9 +142,9 @@ public static class HttpTestHelpers
         return response;
     }
 
-    public static HttpResponseMessage CreateEmptyResponse(HttpStatusCode statusCode = HttpStatusCode.NoContent) => new HttpResponseMessage(statusCode);
+    public static HttpResponseMessage CreateEmptyResponse(HttpStatusCode statusCode = HttpStatusCode.NoContent) => new(statusCode);
 
-    public static HttpResponseMessage CreateNullResponse(HttpStatusCode statusCode = HttpStatusCode.OK) => new HttpResponseMessage(statusCode)
+    public static HttpResponseMessage CreateNullResponse(HttpStatusCode statusCode = HttpStatusCode.OK) => new(statusCode)
     {
         Content = new StringContent("null")
     };

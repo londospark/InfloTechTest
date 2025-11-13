@@ -21,7 +21,7 @@ public class UsersClientLogsTests
         var dto = new PagedResultDto<UserLogDto>(
             new System.Collections.Generic.List<UserLogDto>
             {
-                new UserLogDto(1, 7, "A", DateTime.UtcNow),
+                new(1, 7, "A", DateTime.UtcNow),
             },
             page: 2,
             pageSize: 3,
