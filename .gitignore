@@ -249,3 +249,4 @@ ModelManifest.xml
 
 # Rider specific folder
 .idea/
+/.mcp.json

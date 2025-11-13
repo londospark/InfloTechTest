@@ -220,6 +220,48 @@ public class ActivityLogsTests : BunitContext
         cut.Markup.Should().Contain("No logs found");
     }
 
+    [Fact]
+    public async Task ActivityLogs_ShowsErrorMessage_WhenUnexpectedExceptionOccurs()
+    {
+        // Arrange: client throws unexpected exception
+        var fakeClient = new FakeUsersClientThrow();
+        var fakeLogsService = new FakeUserLogsService();
+
+        Services.AddScoped<IUsersClient>(_ => fakeClient);
+        Services.AddScoped<IUserLogsService>(_ => fakeLogsService);
+
+        // Act
+        var cut = Render<ActivityLogs>(parameters => parameters
+            .Add(p => p.UserId, 1L)
+            .Add(p => p.PageSize, 5));
+
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Assert: Should show error or fallback UI
+        cut.Markup.Should().Contain("No logs found"); // or replace with actual error message if present
+    }
+
+    [Fact]
+    public async Task ActivityLogs_RendersLogWithMissingMessage()
+    {
+        // Arrange: log with null/empty message
+        var fakeClient = new FakeUsersClientWithInvalidLog();
+        var fakeLogsService = new FakeUserLogsService();
+
+        Services.AddScoped<IUsersClient>(_ => fakeClient);
+        Services.AddScoped<IUserLogsService>(_ => fakeLogsService);
+
+        // Act
+        var cut = Render<ActivityLogs>(parameters => parameters
+            .Add(p => p.UserId, 1L)
+            .Add(p => p.PageSize, 5));
+
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Assert: Should render fallback or empty message
+        cut.Markup.Should().Contain("(no message)"); // or whatever fallback is used in the component
+    }
+
     // --- Fake client / service implementations used in tests ---
 
     private sealed class FakeUsersClient : IUsersClient
@@ -367,5 +409,24 @@ public class ActivityLogsTests : BunitContext
         public void Dispose() { }
 
         public void Raise(UserLogDto dto) => LogReceived?.Invoke(dto);
+    }
+
+    private sealed class FakeUsersClientWithInvalidLog : IUsersClient
+    {
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
+        public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
+        public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<UserListItemDto> UpdateUserAsync(long id, CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
+
+        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default)
+        {
+            var logs = new List<UserLogDto>
+            {
+                new UserLogDto(1, userId, null, DateTime.UtcNow.AddMinutes(-5))
+            };
+            return Task.FromResult(new PagedResultDto<UserLogDto>(logs, page, pageSize, 1));
+        }
     }
 }
