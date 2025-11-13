@@ -129,7 +129,7 @@ public class ListPageTests : BunitContext
         // Arrange
         RegisterServices();
         // initial list has one user with id 1
-        var users = new UserListDto([ new(1, "John", "Doe", "john@example.com", true, new DateTime(1990,1,1)) ]);
+        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1))]);
         this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
         // After deletion, subsequent load returns empty
         this.usersClient.Setup(c => c.GetUsersByActiveAsync(It.IsAny<bool>(), default)).ReturnsAsync(new UserListDto([]));
@@ -152,7 +152,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        var users = new UserListDto([ new(1, "John", "Doe", "john@example.com", true, new DateTime(1990,1,1)) ]);
+        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1))]);
         this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
 
         // Act
@@ -172,7 +172,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        var users = new UserListDto([ new(1, "John", "Doe", "john@example.com", true, new DateTime(1990,1,1)) ]);
+        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1))]);
         this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
 
         // Act

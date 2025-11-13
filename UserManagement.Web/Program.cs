@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Scalar.AspNetCore;
+using UserManagement.Data;
 using UserManagement.Data.Extensions;
 using UserManagement.ServiceDefaults;
 using UserManagement.Services.Extensions;
-using Scalar.AspNetCore;
-using UserManagement.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,16 +26,9 @@ builder.Services.AddCors(o =>
 {
     o.AddPolicy(corsPolicyName, p =>
     {
-        if (builder.Environment.IsDevelopment())
-        {
-            p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
-        }
-        else
-        {
-            p.AllowAnyHeader().AllowAnyMethod().WithOrigins(
-                builder.Configuration["FrontendOrigin"] ?? "http://localhost:0"
-            );
-        }
+        p.AllowAnyHeader().AllowAnyMethod().WithOrigins(
+            builder.Configuration["FrontendOrigin"] ?? "http://localhost:0"
+        );
     });
 });
 

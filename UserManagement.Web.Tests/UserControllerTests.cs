@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
-using Microsoft.AspNetCore.Mvc;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Controllers;
 
@@ -208,7 +208,7 @@ public class UserControllerTests
         result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
         this.dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
     }
-    
+
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
     {
         dateOfBirth ??= new(1990, 1, 1);

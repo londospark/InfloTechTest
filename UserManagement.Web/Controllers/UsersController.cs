@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;

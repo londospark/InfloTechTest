@@ -3,7 +3,7 @@ using UserManagement.Data.Entities;
 
 namespace UserManagement.Services.Interfaces;
 
-public interface IUserService 
+public interface IUserService
 {
     /// <summary>
     /// Return users by active state

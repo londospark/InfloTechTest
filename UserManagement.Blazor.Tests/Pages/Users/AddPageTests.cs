@@ -1,12 +1,12 @@
 ﻿using System;
 using Bunit;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using UserManagement.Blazor.Services;
 using UserManagement.Shared.DTOs;
 using Xunit;
-using Microsoft.AspNetCore.Components;
 
 namespace UserManagement.Blazor.Tests.Pages.Users;
 
