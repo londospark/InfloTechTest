@@ -36,5 +36,59 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release --nologo
 
-      - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Run tests with coverage
+        # Collect XPlat Code Coverage (Coverlet) and produce TRX test result files
+        run: |
+          mkdir -p TestResults
+          dotnet test --no-build --configuration Release --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+
+      - name: Publish coverage artifact (raw)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-files
+          path: '**/coverage.cobertura.xml'
+
+      - name: Convert coverage to HTML (reportgenerator)
+        if: always()
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.0.0 || true
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          mkdir -p coverage-report
+          reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+        continue-on-error: true
+
+      - name: Upload coverage HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./TestResults/**/coverage.cobertura.xml
+          fail_ci_if_error: true
+          verbose: true
+        env:
+          # Optional: set CODECOV_TOKEN in repository secrets if uploading from private repos
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Publish test results to Checks (test-reporter)
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Unit tests
+          path: ./TestResults/**/*.trx
+          reporter: vstest
+          upload: true
+          fail-on-error: false
