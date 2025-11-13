@@ -86,7 +86,7 @@ public class ListPageTests : BunitContext
 
         // Assert: Edit link exists with expected href and data-testid
         var edit = cut.Find("a[data-testid='edit-1']");
-        edit.GetAttribute("href").Should().Be("/users/1?edit=true");
+        edit.GetAttribute("href").Should().Be("/users/1?edit=true&return=/users");
         edit.ClassList.Should().Contain(new[] { "btn", "btn-warning" });
         edit.GetAttribute("aria-label").Should().Be("Edit");
         edit.GetAttribute("title").Should().Be("Edit");

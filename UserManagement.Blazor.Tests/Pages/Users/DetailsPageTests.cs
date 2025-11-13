@@ -138,7 +138,52 @@ public class DetailsPageTests : BunitContext
         cut.Find("#dob");
         cut.Find("#isActive");
     }
-    
+
+    [Fact]
+    public async Task Save_NavigatesBack_WhenReturnProvided()
+    {
+        // Arrange
+        Register();
+        var original = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
+        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(original);
+        this.usersClient
+            .Setup(c => c.UpdateUserAsync(7, It.IsAny<CreateUserRequestDto>(), default))
+            .ReturnsAsync(new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15)));
+
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/users/7?edit=true&return=/users");
+
+        var cut = Render<Details>(ps => ps.Add(p => p.id, 7));
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Act: immediately save (already in edit mode due to query param)
+        cut.Find("[data-testid='save-user']").Click();
+
+        // Assert: navigated back to return url
+        nav.Uri.Should().EndWith("/users");
+    }
+
+    [Fact]
+    public async Task Cancel_NavigatesBack_WhenReturnProvided()
+    {
+        // Arrange
+        Register();
+        var dto = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
+        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(dto);
+
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/users/7?edit=true&return=/users");
+
+        var cut = Render<Details>(ps => ps.Add(p => p.id, 7));
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Act
+        cut.Find("[data-testid='cancel-edit']").Click();
+
+        // Assert
+        nav.Uri.Should().EndWith("/users");
+    }
+
     [Fact]
     public async Task ShowsError_OnFailure()
     {
