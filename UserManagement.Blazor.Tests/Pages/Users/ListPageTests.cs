@@ -30,7 +30,7 @@ public class ListPageTests : BunitContext
             .Returns(async () =>
             {
                 await Task.Delay(10);
-                return new(Array.Empty<UserListItemDto>());
+                return new([]);
             });
 
         // Act
@@ -45,11 +45,10 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        var dob = new DateTime(1990, 1, 1);
-        var users = new UserListDto(new[]
-        {
-            new UserListItemDto(1, "John", "Doe", "john@example.com", true, dob)
-        });
+        var dob = new DateTime(1990, 2, 1);
+        var users = new UserListDto([
+            new(1, "John", "Doe", "john@example.com", true, dob)
+        ]);
         this.usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(users);
@@ -62,8 +61,7 @@ public class ListPageTests : BunitContext
         cut.Markup.Should().Contain("Users");
         cut.Markup.Should().Contain("john@example.com");
         cut.FindAll("table tbody tr").Count.Should().Be(1);
-        // Expect the date of birth to be displayed in ISO format by default
-        cut.Markup.Should().Contain("1990-01-01");
+        cut.Markup.Should().Contain(dob.ToString("d"));
     }
 
     [Fact]
@@ -73,7 +71,7 @@ public class ListPageTests : BunitContext
         RegisterServices();
         this.usersClient
             .Setup(c => c.GetUsersAsync(default))
-            .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
+            .ReturnsAsync(new UserListDto([]));
 
         // Act
         var cut = Render<List>();
@@ -90,10 +88,10 @@ public class ListPageTests : BunitContext
         RegisterServices();
         this.usersClient
             .Setup(c => c.GetUsersAsync(default))
-            .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
+            .ReturnsAsync(new UserListDto([]));
         this.usersClient
             .Setup(c => c.GetUsersByActiveAsync(true, default))
-            .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
+            .ReturnsAsync(new UserListDto([]));
 
         // Act
         var cut = Render<List>();
