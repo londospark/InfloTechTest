@@ -97,9 +97,9 @@ public class ListPageTests : BunitContext
         var cut = Render<List>();
         await cut.InvokeAsync(() => Task.CompletedTask);
 
-        // Change select to Active
-        var select = cut.Find("select#userFilter");
-        select.Change("Active");
+        // Change filter to Active via radio button
+        var radioActive = cut.Find("input[data-testid='filter-active']");
+        radioActive.Change("Active");
 
         // Assert
         this.usersClient.Verify(c => c.GetUsersByActiveAsync(true, default), Times.Once);

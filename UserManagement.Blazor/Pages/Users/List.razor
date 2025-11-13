@@ -6,14 +6,22 @@
 
 <h1>Users</h1>
 
-<div class="mb-3">
-    <a class="btn btn-success me-3" href="/users/add">Add User</a>
-    <label for="userFilter" class="form-label">Filter</label>
-    <select id="userFilter" class="form-select" @onchange="OnFilterChanged" value="@selectedFilter">
-        <option value="All">All users</option>
-        <option value="Active">Active users</option>
-        <option value="Inactive">Inactive users</option>
-    </select>
+<div class="mb-3 d-flex align-items-center gap-3 flex-wrap">
+    <a class="btn btn-success" href="/users/add">Add User</a>
+    <span class="fw-semibold">Show:</span>
+    <div class="btn-group" role="radiogroup" aria-label="User filter">
+        <input class="btn-check" type="radio" name="userFilter" id="filterAll" value="All"
+               data-testid="filter-all" @onchange="OnFilterChanged" checked="@("All" == selectedFilter)" />
+        <label class="btn btn-outline-primary" for="filterAll">All users</label>
+
+        <input class="btn-check" type="radio" name="userFilter" id="filterActive" value="Active"
+               data-testid="filter-active" @onchange="OnFilterChanged" checked="@("Active" == selectedFilter)" />
+        <label class="btn btn-outline-primary" for="filterActive">Active users</label>
+
+        <input class="btn-check" type="radio" name="userFilter" id="filterInactive" value="Inactive"
+               data-testid="filter-inactive" @onchange="OnFilterChanged" checked="@("Inactive" == selectedFilter)" />
+        <label class="btn btn-outline-primary" for="filterInactive">Inactive users</label>
+    </div>
 </div>
 
 @if (loading)
@@ -59,7 +67,10 @@ else if (users?.Items?.Count > 0)
                         }
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-danger" data-testid="@($"delete-{u.Id}")" @onclick="() => OnDeleteClicked(u.Id)">Delete</button>
+                        <button class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1" data-testid="@($"delete-{u.Id}")" @onclick="() => OnDeleteClicked(u.Id)" aria-label="Delete" title="Delete">
+                            <i class="bi bi-trash" aria-hidden="true"></i>
+                            <span class="visually-hidden">Delete</span>
+                        </button>
                     </td>
                 </tr>
             }
