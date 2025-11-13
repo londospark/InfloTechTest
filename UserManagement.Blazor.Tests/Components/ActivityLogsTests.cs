@@ -266,8 +266,8 @@ public class ActivityLogsTests : BunitContext
 
     private sealed class FakeUsersClient : IUsersClient
     {
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -285,8 +285,8 @@ public class ActivityLogsTests : BunitContext
 
     private sealed class FakeUsersClientEmpty : IUsersClient
     {
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -307,8 +307,8 @@ public class ActivityLogsTests : BunitContext
             new UserLogDto(3, 1, "Log 3", DateTime.UtcNow.AddMinutes(-1))
         };
 
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -323,8 +323,8 @@ public class ActivityLogsTests : BunitContext
 
     private sealed class FakeUsersClientForDifferentUsers : IUsersClient
     {
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -345,8 +345,8 @@ public class ActivityLogsTests : BunitContext
 
     private sealed class FakeUsersClientThrow : IUsersClient
     {
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -413,8 +413,8 @@ public class ActivityLogsTests : BunitContext
 
     private sealed class FakeUsersClientWithInvalidLog : IUsersClient
     {
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date));
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;

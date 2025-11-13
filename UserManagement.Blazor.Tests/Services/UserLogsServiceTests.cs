@@ -148,7 +148,7 @@ public class UserLogsServiceTests
         // Arrange
         var mockConn = new Mock<IUserLogsHubConnection>();
         Action<UserLogDto>? handler = null;
-        mockConn.Setup(c => c.On<UserLogDto>("LogAdded", It.IsAny<Action<UserLogDto>>()))
+        mockConn.Setup(c => c.On("LogAdded", It.IsAny<Action<UserLogDto>>()))
             .Callback<string, Action<UserLogDto>>((_, h) => handler = h);
         var svc = new UserLogsService(mockConn.Object);
         int count = 0;
@@ -168,7 +168,7 @@ public class UserLogsServiceTests
         // Arrange
         var mockConn = new Mock<IUserLogsHubConnection>();
         Action<UserLogDto>? handler = null;
-        mockConn.Setup(c => c.On<UserLogDto>("LogAdded", It.IsAny<Action<UserLogDto>>()))
+        mockConn.Setup(c => c.On("LogAdded", It.IsAny<Action<UserLogDto>>()))
             .Callback<string, Action<UserLogDto>>((_, h) => handler = h);
         var svc = new UserLogsService(mockConn.Object);
         svc.LogReceived += _ => throw new Exception("fail");
@@ -187,7 +187,7 @@ public class UserLogsServiceTests
         // Arrange
         var mockConn = new Mock<IUserLogsHubConnection>();
         Action<UserLogDto>? handler = null;
-        mockConn.Setup(c => c.On<UserLogDto>("LogAdded", It.IsAny<Action<UserLogDto>>()))
+        mockConn.Setup(c => c.On("LogAdded", It.IsAny<Action<UserLogDto>>()))
             .Callback<string, Action<UserLogDto>>((_, h) => handler = h);
         var svc = new UserLogsService(mockConn.Object);
 

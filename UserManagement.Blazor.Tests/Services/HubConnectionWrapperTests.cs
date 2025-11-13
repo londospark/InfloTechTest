@@ -53,17 +53,15 @@ public class HubConnectionWrapperTests
         }
     }
 
-    private class HubConnectionWrapperForTest : IUserLogsHubConnection
+    private class HubConnectionWrapperForTest(HubConnectionWrapperTests.FakeHubConnection inner) : IUserLogsHubConnection
     {
-        private readonly FakeHubConnection _inner;
-        public HubConnectionWrapperForTest(FakeHubConnection inner) => _inner = inner;
-        public HubConnectionState State => _inner.State;
-        public Task StartAsync() => _inner.StartAsync();
-        public Task StopAsync() => _inner.StopAsync();
-        public Task InvokeAsync(string method, params object[] args) => _inner.InvokeAsync(method, args);
-        public void On<T>(string methodName, Action<T> handler) => _inner.On<T>(methodName, handler);
-        public ValueTask DisposeAsync() => _inner.DisposeAsync();
-        public void Raise<T>(string methodName, T arg) => _inner.Raise(methodName, arg);
+        public HubConnectionState State => inner.State;
+        public Task StartAsync() => inner.StartAsync();
+        public Task StopAsync() => inner.StopAsync();
+        public Task InvokeAsync(string method, params object[] args) => inner.InvokeAsync(method, args);
+        public void On<T>(string methodName, Action<T> handler) => inner.On(methodName, handler);
+        public ValueTask DisposeAsync() => inner.DisposeAsync();
+        public void Raise<T>(string methodName, T arg) => inner.Raise(methodName, arg);
     }
 
     [Fact]

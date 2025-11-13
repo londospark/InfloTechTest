@@ -48,8 +48,8 @@ public class DetailsLifecycleTests : BunitContext
 
     private sealed class FakeUsersClient : IUsersClient
     {
-        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
-        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto(Array.Empty<UserListItemDto>()));
+        public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
+        public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListItemDto> GetUserAsync(long id, System.Threading.CancellationToken cancellationToken = default)
         {
             var dto = new UserListItemDto(id, "Test", "User", "test@example.com", true, DateTime.UtcNow.Date);
