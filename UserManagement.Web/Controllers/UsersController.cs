@@ -157,25 +157,60 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
         }
 
         var changed = false;
+        var changes = new List<string>();
+        
         if (!string.Equals(entity.Forename, request.Forename, StringComparison.Ordinal))
-        { entity.Forename = request.Forename; changed = true; }
+        { 
+            changes.Add($"Forename: '{entity.Forename}' → '{request.Forename}'");
+            entity.Forename = request.Forename; 
+            changed = true; 
+        }
         if (!string.Equals(entity.Surname, request.Surname, StringComparison.Ordinal))
-        { entity.Surname = request.Surname; changed = true; }
+        { 
+            changes.Add($"Surname: '{entity.Surname}' → '{request.Surname}'");
+            entity.Surname = request.Surname; 
+            changed = true; 
+        }
         if (!string.Equals(entity.Email, request.Email, StringComparison.OrdinalIgnoreCase))
-        { entity.Email = request.Email; changed = true; }
+        { 
+            changes.Add($"Email: '{entity.Email}' → '{request.Email}'");
+            entity.Email = request.Email; 
+            changed = true; 
+        }
         if (entity.IsActive != request.IsActive)
-        { entity.IsActive = request.IsActive; changed = true; }
+        { 
+            changes.Add($"IsActive: {entity.IsActive} → {request.IsActive}");
+            entity.IsActive = request.IsActive; 
+            changed = true; 
+        }
         if (entity.DateOfBirth != request.DateOfBirth)
-        { entity.DateOfBirth = request.DateOfBirth; changed = true; }
+        { 
+            changes.Add($"DateOfBirth: {entity.DateOfBirth:yyyy-MM-dd} → {request.DateOfBirth:yyyy-MM-dd}");
+            entity.DateOfBirth = request.DateOfBirth; 
+            changed = true; 
+        }
 
         if (!changed)
         {
             logger.LogInformation("No changes detected for user id {UserId}. Skipping update.", id);
         }
+        else
+        {
+            var updated = await userService.UpdateAsync(entity);
+            logger.LogInformation("Updated user id {UserId}. Changes: {Changes}", id, string.Join("; ", changes));
+            
+            // Persist detailed change log for audit trail
+            await userLogService.AddAsync(new UserLog
+            {
+                UserId = id,
+                Message = $"Updated user id {id}: {string.Join("; ", changes)}",
+                CreatedAt = DateTime.UtcNow
+            });
+            
+            return Ok(updated.Map());
+        }
 
-        var updated = changed ? await userService.UpdateAsync(entity) : entity;
-        logger.LogInformation("Updated user id {UserId}. Changes applied: {Changed}", id, changed);
-        return Ok(updated.Map());
+        return Ok(entity.Map());
     }
 
     /// <summary>

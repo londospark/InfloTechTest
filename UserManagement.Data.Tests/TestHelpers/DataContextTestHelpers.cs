@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using UserManagement.Data;
 
 namespace UserManagement.Data.Tests.TestHelpers;
 

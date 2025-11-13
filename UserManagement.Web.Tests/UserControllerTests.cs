@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -330,6 +331,295 @@ public class UserControllerTests
         ctx.UserLogs!.Any(l => l.UserId == user.Id).Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Update_WhenFieldsChange_LogsDetailedChanges()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "Jane",
+            "Smith",
+            "jane@example.com",
+            new DateTime(1991, 5, 15),
+            false
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert
+        result.Result.Should().BeOfType<OkObjectResult>();
+        
+        // Verify the log contains all the field changes
+        var logEntry = logger.GetLogs(LogLevel.Information)
+            .FirstOrDefault(l => l.Message.Contains("Updated user id"));
+        logEntry.Should().NotBeNull();
+        logEntry!.Message.Should().Contain("Forename: 'John' → 'Jane'");
+        logEntry.Message.Should().Contain("Surname: 'Doe' → 'Smith'");
+        logEntry.Message.Should().Contain("Email: 'john@example.com' → 'jane@example.com'");
+        logEntry.Message.Should().Contain("IsActive: True → False");
+        logEntry.Message.Should().Contain("DateOfBirth: 1990-01-01 → 1991-05-15");
+        
+        // Verify a UserLog was persisted with the detailed changes
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        userLog!.Message.Should().Contain($"Updated user id {user.Id}");
+        userLog.Message.Should().Contain("Forename: 'John' → 'Jane'");
+        userLog.Message.Should().Contain("Surname: 'Doe' → 'Smith'");
+        userLog.Message.Should().Contain("Email: 'john@example.com' → 'jane@example.com'");
+        userLog.Message.Should().Contain("IsActive: True → False");
+        userLog.Message.Should().Contain("DateOfBirth: 1990-01-01 → 1991-05-15");
+    }
+
+    [Fact]
+    public async Task Update_WhenOnlyForenameChanges_LogsOnlyForenameChange()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "Jane",
+            "Doe",
+            "john@example.com",
+            new DateTime(1990, 1, 1),
+            true
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert
+        result.Result.Should().BeOfType<OkObjectResult>();
+        
+        var logEntry = logger.GetLogs(LogLevel.Information)
+            .FirstOrDefault(l => l.Message.Contains("Updated user id"));
+        logEntry.Should().NotBeNull();
+        logEntry!.Message.Should().Contain("Forename: 'John' → 'Jane'");
+        logEntry.Message.Should().NotContain("Surname:");
+        logEntry.Message.Should().NotContain("Email:");
+        logEntry.Message.Should().NotContain("IsActive:");
+        logEntry.Message.Should().NotContain("DateOfBirth:");
+        
+        // Verify UserLog persisted with only forename change
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        userLog!.Message.Should().Contain("Forename: 'John' → 'Jane'");
+        userLog.Message.Should().NotContain("Surname:");
+    }
+
+    [Fact]
+    public async Task Update_WhenOnlyEmailChanges_LogsOnlyEmailChange()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "old@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "John",
+            "Doe",
+            "new@example.com",
+            new DateTime(1990, 1, 1),
+            true
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        userLog!.Message.Should().Contain("Email: 'old@example.com' → 'new@example.com'");
+        userLog.Message.Should().NotContain("Forename:");
+        userLog.Message.Should().NotContain("Surname:");
+    }
+
+    [Fact]
+    public async Task Update_WhenOnlyIsActiveChanges_LogsOnlyIsActiveChange()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "John",
+            "Doe",
+            "john@example.com",
+            new DateTime(1990, 1, 1),
+            false
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        userLog!.Message.Should().Contain("IsActive: True → False");
+        userLog.Message.Should().NotContain("Forename:");
+        userLog.Message.Should().NotContain("Email:");
+    }
+
+    [Fact]
+    public async Task Update_WhenOnlyDateOfBirthChanges_LogsOnlyDateChange()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "John",
+            "Doe",
+            "john@example.com",
+            new DateTime(1991, 12, 25),
+            true
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        userLog!.Message.Should().Contain("DateOfBirth: 1990-01-01 → 1991-12-25");
+        userLog.Message.Should().NotContain("Forename:");
+    }
+
+    [Fact]
+    public async Task Update_WhenNoChanges_DoesNotCreateLog()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "John",
+            "Doe",
+            "john@example.com",
+            new DateTime(1990, 1, 1),
+            true
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert
+        result.Result.Should().BeOfType<OkObjectResult>();
+        
+        // Verify log says no changes detected
+        logger.LogContains(LogLevel.Information, "No changes detected").Should().BeTrue();
+        
+        // Verify NO UserLog was created
+        var userLogs = ctx.UserLogs!.Where(l => l.UserId == user.Id);
+        userLogs.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Update_WhenMultipleFieldsChange_SeparatesChangesWithSemicolon()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "Jane",
+            "Smith",
+            "john@example.com",
+            new DateTime(1990, 1, 1),
+            true
+        );
+
+        // Act
+        await controller.Update(user.Id, req);
+
+        // Assert
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        
+        // Verify changes are separated by semicolons
+        userLog!.Message.Should().Contain("; ");
+        userLog.Message.Should().MatchRegex(@"Forename:.*?.*; Surname:.*?");
+    }
+
+    [Fact]
+    public async Task Update_EmailCaseChange_LogsChange()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1));
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "John",
+            "Doe",
+            "JOHN@EXAMPLE.COM",
+            new DateTime(1990, 1, 1),
+            true
+        );
+
+        // Act
+        var result = await controller.Update(user.Id, req);
+
+        // Assert - email comparison is case-insensitive, so no change should be detected
+        logger.LogContains(LogLevel.Information, "No changes detected").Should().BeTrue();
+        ctx.UserLogs!.Where(l => l.UserId == user.Id).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Update_ChangesTimestamp_IsUtc()
+    {
+        // Arrange
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx);
+        var user = users.First();
+        
+        var req = new CreateUserRequestDto(
+            "Changed",
+            user.Surname,
+            user.Email,
+            user.DateOfBirth,
+            user.IsActive
+        );
+
+        // Act
+        var beforeUpdate = DateTime.UtcNow;
+        await controller.Update(user.Id, req);
+        var afterUpdate = DateTime.UtcNow;
+
+        // Assert
+        var userLog = ctx.UserLogs!.FirstOrDefault(l => l.UserId == user.Id);
+        userLog.Should().NotBeNull();
+        userLog!.CreatedAt.Should().BeOnOrAfter(beforeUpdate);
+        userLog.CreatedAt.Should().BeOnOrBefore(afterUpdate);
+        userLog.CreatedAt.Kind.Should().Be(DateTimeKind.Utc);
+    }
+
     private User[] SetupUsers(DataContext ctx, string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
     {
         dateOfBirth ??= new(1990, 1, 1);
@@ -376,19 +666,34 @@ public class UserControllerTests
     // Lightweight test logger capturing messages
     private sealed class MockLogger<T>
     {
-        private readonly System.Collections.Concurrent.ConcurrentBag<(LogLevel, string)> _entries = [];
+        private readonly System.Collections.Concurrent.ConcurrentBag<(LogLevel Level, string Message)> _entries = [];
+        
         public ILogger<T> AsILogger() => new Adapter(this);
-        public bool LogContains(LogLevel level, string contains) => _entries.Any(e => e.Item1 == level && e.Item2.Contains(contains));
+        
+        public bool LogContains(LogLevel level, string contains) => 
+            _entries.Any(e => e.Level == level && e.Message.Contains(contains));
+        
+        public IEnumerable<(LogLevel Level, string Message)> GetLogs(LogLevel level) => 
+            _entries.Where(e => e.Level == level);
+        
         public void Add(LogLevel level, string message) => _entries.Add((level, message));
 
-        private sealed class Adapter(MockLogger<T> parent)
-            : ILogger, ILogger<T>
+        private sealed class Adapter(MockLogger<T> parent) : ILogger, ILogger<T>
         {
             private readonly MockLogger<T> _parent = parent;
+            
             public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+            
             public bool IsEnabled(LogLevel logLevel) => true;
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => _parent.Add(logLevel, formatter(state, exception));
-            private sealed class NullScope : IDisposable { public static readonly NullScope Instance = new(); public void Dispose() { } }
+            
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => 
+                _parent.Add(logLevel, formatter(state, exception));
+            
+            private sealed class NullScope : IDisposable 
+            { 
+                public static readonly NullScope Instance = new(); 
+                public void Dispose() { } 
+            }
         }
     }
 }

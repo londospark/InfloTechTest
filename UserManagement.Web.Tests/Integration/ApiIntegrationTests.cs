@@ -5,16 +5,12 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using UserManagement.Data;
 using UserManagement.Shared.DTOs;
-using Xunit;
-using FluentAssertions;
 
 namespace UserManagement.Web.Tests.Integration;
 
@@ -115,7 +111,7 @@ public class ApiIntegrationTests(WebApplicationFactory<Program> Factory) : IClas
 
             var client = factory.CreateClient();
 
-            var req = new CreateUserRequestDto("IntApi", "Test", "intapi@test.com", new System.DateTime(1990,1,1), true);
+            var req = new CreateUserRequestDto("IntApi", "Test", "intapi@test.com", new DateTime(1990,1,1), true);
             var json = JsonSerializer.Serialize(req);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 

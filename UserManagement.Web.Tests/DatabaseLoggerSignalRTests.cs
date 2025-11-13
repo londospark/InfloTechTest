@@ -54,7 +54,7 @@ public class DatabaseLoggerSignalRTests
         var loggerFactory = new Mock<ILoggerFactory>();
         loggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns(innerLogger.Object);
 
-        var dbLogger = new DatabaseLogger<Controllers.UsersController>(loggerFactory.Object, scopeFactory.Object, null);
+        var dbLogger = new DatabaseLogger<Web.Controllers.UsersController>(loggerFactory.Object, scopeFactory.Object, null);
 
         // Act: log under a user scope so it persists
         using (dbLogger.BeginScope(new Dictionary<string, object?> { ["UserId"] = 42L }))

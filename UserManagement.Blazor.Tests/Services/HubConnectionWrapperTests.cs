@@ -50,7 +50,7 @@ public class HubConnectionWrapperTests
         }
     }
 
-    private class HubConnectionWrapperForTest(HubConnectionWrapperTests.FakeHubConnection inner) : IUserLogsHubConnection
+    private class HubConnectionWrapperForTest(FakeHubConnection inner) : IUserLogsHubConnection
     {
         public HubConnectionState State => inner.State;
         public Task StartAsync() => inner.StartAsync();
