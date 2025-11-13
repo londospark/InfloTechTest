@@ -1,28 +1,35 @@
 using Microsoft.AspNetCore.SignalR.Client;
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using UserManagement.Shared.DTOs;
 
 namespace UserManagement.Blazor.Services;
 
 public sealed class UserLogsService : IUserLogsService
 {
-    private readonly HubConnection _connection;
+    private readonly IUserLogsHubConnection _connection;
 
     public event Action<UserLogDto>? LogReceived;
 
+    // Existing constructor - builds a real HubConnection wrapped by HubConnectionWrapper
     public UserLogsService(HttpClient httpClient)
     {
         // Use the same base URL as the API client (where the SignalR hub is hosted)
         var apiBaseUrl = httpClient.BaseAddress?.ToString().TrimEnd('/') ?? throw new InvalidOperationException("HttpClient BaseAddress not configured");
         var hubUrl = $"{apiBaseUrl}/hubs/userlogs";
 
-        _connection = new HubConnectionBuilder()
+        var hub = new HubConnectionBuilder()
             .WithUrl(hubUrl)
             .WithAutomaticReconnect()
             .Build();
 
+        _connection = new HubConnectionWrapper(hub);
+
+        _connection.On<UserLogDto>("LogAdded", dto => LogReceived?.Invoke(dto));
+    }
+
+    // New constructor for tests / DI where a mockable connection can be provided
+    public UserLogsService(IUserLogsHubConnection connection)
+    {
+        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _connection.On<UserLogDto>("LogAdded", dto => LogReceived?.Invoke(dto));
     }
 

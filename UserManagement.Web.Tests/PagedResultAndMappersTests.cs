@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using FluentAssertions;
 using UserManagement.Data.Entities;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Helpers;
-using Xunit;
 
 namespace UserManagement.Web.Tests;
 

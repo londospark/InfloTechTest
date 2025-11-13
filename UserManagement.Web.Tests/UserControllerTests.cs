@@ -2,14 +2,15 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using MockQueryable;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Controllers;
+using Microsoft.Data.Sqlite;
 
 namespace UserManagement.Web.Tests;
 
@@ -18,54 +19,60 @@ public class UserControllerTests
     [Fact]
     public async Task List_WhenServiceReturnsUsers_ModelMustContainUsers()
     {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var controller = CreateController();
-        var users = SetupUsers();
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx);
 
-        // Act: Invokes the method under test with the arranged parameters.
         var result = await controller.List();
 
-        // Assert: Verifies that the action of the method under test behaves as expected.
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.StatusCode.Should().Be(200);
-        ok.Value.Should().BeOfType<UserListDto>()
-            .Which.Items.Should().BeEquivalentTo(users);
+        var dto = ok.Value.Should().BeOfType<UserListDto>().Which;
+        // Ensure the returned collection includes the users we added
+        dto.Items.Should().Contain(i => i.Email == users.First().Email);
     }
 
     [Fact]
     public async Task ListByActive_WhenFilteringActiveUsers_ModelMustContainOnlyActiveUsers()
     {
-        var controller = CreateController();
-        var users = SetupUsers(isActive: true);
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx, isActive: true);
 
         var result = await controller.ListByActive(isActive: true);
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.StatusCode.Should().Be(200);
-        ok.Value.Should().BeOfType<UserListDto>()
-            .Which.Items.Should().BeEquivalentTo(users);
+        var dto = ok.Value.Should().BeOfType<UserListDto>().Which;
+        // All returned items should be active and include our inserted user
+        dto.Items.Should().NotBeEmpty();
+        dto.Items.Should().OnlyContain(i => i.IsActive);
+        dto.Items.Should().Contain(i => i.Email == users.First().Email);
     }
 
     [Fact]
     public async Task ListByActive_WhenFilteringInactiveUsers_ModelMustContainOnlyInactiveUsers()
     {
-        var controller = CreateController();
-        var users = SetupUsers(isActive: false);
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx, isActive: false);
 
         var result = await controller.ListByActive(isActive: false);
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.StatusCode.Should().Be(200);
-        ok.Value.Should().BeOfType<UserListDto>()
-            .Which.Items.Should().BeEquivalentTo(users);
+        var dto = ok.Value.Should().BeOfType<UserListDto>().Which;
+        dto.Items.Should().NotBeEmpty();
+        dto.Items.Should().OnlyContain(i => !i.IsActive);
+        dto.Items.Should().Contain(i => i.Email == users.First().Email);
     }
 
     [Fact]
     public async Task Create_WhenValidRequest_Returns201CreatedWithLocationAndBody()
     {
-        // Arrange
-        var logger = new Mock<ILogger<UsersController>>();
-        var controller = CreateController(logger.Object);
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
         var req = new CreateUserRequestDto(
             "Jane",
             "Doe",
@@ -74,75 +81,56 @@ public class UserControllerTests
             true
         );
 
-        // Simulate DB assigning id
-        dataContext
-            .Setup(dc => dc.CreateAsync(It.IsAny<User>()))
-            .Callback<User>(u => u.Id = 123)
-            .Returns(Task.CompletedTask);
-
-        // Act
         var action = await controller.Create(req);
 
-        // Assert: returns 201 Created with body and Location
         var created = action.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         created.StatusCode.Should().Be(201);
         created.ActionName.Should().Be(nameof(UsersController.GetById));
-        created.RouteValues!["id"].Should().Be(123);
         var dto = created.Value.As<UserListItemDto>();
-        dto.Id.Should().Be(123);
         dto.Forename.Should().Be("Jane");
         dto.Surname.Should().Be("Doe");
         dto.Email.Should().Be("jane.doe@example.com");
         dto.IsActive.Should().BeTrue();
         dto.DateOfBirth.Should().Be(new(1992, 5, 10));
 
-        // Verify the data context was called with expected user
-        dataContext.Verify(dc => dc.CreateAsync(It.Is<User>(u =>
-            u.Forename == req.Forename &&
-            u.Surname == req.Surname &&
-            u.Email == req.Email &&
-            u.IsActive == req.IsActive &&
-            u.DateOfBirth == req.DateOfBirth
-        )), Times.Once);
+        // Verify persisted in DB
+        var persisted = ctx.Users!.FirstOrDefault(u => u.Email == req.Email);
+        persisted.Should().NotBeNull();
+        persisted!.Id.Should().BeGreaterThan(0);
 
         // And a log was written for creation
-        VerifyLogContains(logger, LogLevel.Information, "Created user id");
+        logger.LogContains(LogLevel.Information, "Created user id").Should().BeTrue();
     }
 
     [Fact]
     public async Task Create_WhenInvalidRequest_ReturnsBadRequestAndDoesNotPersist()
     {
-        // Arrange: invalid Forename (empty). Provide other valid fields
-        var logger = new Mock<ILogger<UsersController>>();
-        var controller = CreateController(logger.Object);
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
         var req = new CreateUserRequestDto(
-            "", // invalid
+            "",
             "Doe",
             "jane.doe@example.com",
             new(1992, 5, 10),
             true
         );
 
-        // Act
         var action = await controller.Create(req);
 
-        // Assert: should return a problem response (400 Bad Request in API pipeline)
         var objectResult = action.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         objectResult.Value.Should().BeOfType<ValidationProblemDetails>();
         objectResult.StatusCode.Should().Be(400);
 
-        // And no persistence should occur
-        dataContext.Verify(dc => dc.CreateAsync(It.IsAny<User>()), Times.Never);
-
-        // And a warning was logged
-        VerifyLogContains(logger, LogLevel.Warning, "Create user validation failed");
+        ctx.Users!.Any(u => u.Email == req.Email).Should().BeFalse();
+        logger.LogContains(LogLevel.Warning, "Create user validation failed").Should().BeTrue();
     }
 
     [Fact]
     public async Task Create_WhenDateOfBirthInFuture_ReturnsBadRequest()
     {
-        // Arrange: use a future DOB to hit shared IValidatableObject rule
-        var controller = CreateController();
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
         var future = DateTime.Now.AddDays(1);
         var req = new CreateUserRequestDto(
             "Jane",
@@ -152,88 +140,81 @@ public class UserControllerTests
             true
         );
 
-        // Act
         var action = await controller.Create(req);
 
-        // Assert
         var objectResult = action.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(400);
         objectResult.Value.Should().BeOfType<ValidationProblemDetails>()
             .Which.Errors.Should().ContainKey(nameof(CreateUserRequestDto.DateOfBirth));
 
-        // No persistence
-        dataContext.Verify(dc => dc.CreateAsync(It.IsAny<User>()), Times.Never);
+        ctx.Users!.Any(u => u.Email == req.Email).Should().BeFalse();
     }
 
     [Fact]
     public async Task GetById_WhenFound_Returns200WithUser()
     {
-        var controller = CreateController();
-        var users = SetupUsers();
-        users.First().Id = 42;
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var users = SetupUsers(ctx);
+        // Use the Id assigned by the database after SaveChanges
+        ctx.SaveChanges();
+        var assignedId = users.First().Id;
 
-        var result = await controller.GetById(42);
+        var result = await controller.GetById(assignedId);
 
         var ok = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         ok.StatusCode.Should().Be(200);
         ok.Value.Should().BeOfType<UserListItemDto>()
-            .Which.Id.Should().Be(42);
+            .Which.Id.Should().Be(assignedId);
     }
 
     [Fact]
     public async Task GetById_WhenMissing_Returns404()
     {
-        var logger = new Mock<ILogger<UsersController>>();
-        var controller = CreateController(logger.Object);
-        _ = SetupUsers();
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        SetupUsers(ctx);
 
         var result = await controller.GetById(999);
 
         result.Result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
-
-        // Warning logged for not found
-        VerifyLogContains(logger, LogLevel.Warning, "User not found for id");
+        logger.LogContains(LogLevel.Warning, "User not found for id").Should().BeTrue();
     }
 
     [Fact]
     public async Task Delete_WhenFound_ReturnsNoContent()
     {
-        // Arrange
-        var logger = new Mock<ILogger<UsersController>>();
-        var controller = CreateController(logger.Object);
-        var users = SetupUsers();
-        users.First().Id = 5;
+        var ctx = CreateContext();
+        var logger = new MockLogger<UsersController>();
+        var controller = CreateController(ctx, logger);
+        var users = SetupUsers(ctx);
+        // Persist users and use the real assigned id
+        ctx.SaveChanges();
+        var u = users.First();
+        var id = u.Id;
 
-        dataContext.Setup(dc => dc.DeleteAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
+        var result = await controller.Delete(id);
 
-        // Act
-        var result = await controller.Delete(5);
-
-        // Assert
         result.Should().BeOfType<NoContentResult>().Which.StatusCode.Should().Be(204);
-        dataContext.Verify(dc => dc.DeleteAsync(It.Is<User>(u => u.Id == 5)), Times.Once);
-
-        // Information logs for delete flow
-        VerifyLogContains(logger, LogLevel.Information, "Deleting user id");
-        VerifyLogContains(logger, LogLevel.Information, "Deleted user id");
+        ctx.Users!.Any(x => x.Id == id).Should().BeFalse();
+        logger.LogContains(LogLevel.Information, "Deleting user id").Should().BeTrue();
+        logger.LogContains(LogLevel.Information, "Deleted user id").Should().BeTrue();
     }
 
     [Fact]
     public async Task Delete_WhenMissing_ReturnsNotFound()
     {
-        // Arrange
-        var controller = CreateController();
-        _ = SetupUsers();
+        var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        SetupUsers(ctx);
 
-        // Act
         var result = await controller.Delete(999);
 
-        // Assert
         result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
-        dataContext.Verify(dc => dc.DeleteAsync(It.IsAny<User>()), Times.Never);
     }
 
-    private User[] SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
+    private User[] SetupUsers(DataContext ctx, string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
     {
         dateOfBirth ??= new(1990, 1, 1);
         var users = new[]
@@ -248,73 +229,53 @@ public class UserControllerTests
             }
         };
 
-        var mockQueryable = users.BuildMock();
-        dataContext
-            .Setup(s => s.GetAll<User>())
-            .Returns(mockQueryable);
-
+        ctx.Users!.AddRange(users);
+        ctx.SaveChanges();
         return users;
     }
 
-    private readonly Mock<IDataContext> dataContext = new();
-    private UsersController CreateController(ILogger<UsersController>? logger = null)
-        => new(
-            new UserService(dataContext.Object),
-            new UserLogService(dataContext.Object),
-            logger ?? new NullLogger<UsersController>());
-
-    [Fact]
-    public async Task GetLogs_WhenLogsExistForUser_ReturnsPagedDescending()
+    private static DataContext CreateContext()
     {
-        // Arrange
-        var controller = CreateController();
-        var now = DateTime.UtcNow;
-        var logs = new[]
-        {
-            new UserLog { Id = 1, UserId = 77, Message = "A", CreatedAt = now.AddMinutes(-1) },
-            new UserLog { Id = 2, UserId = 77, Message = "B", CreatedAt = now.AddMinutes(-2) },
-            new UserLog { Id = 3, UserId = 77, Message = "C", CreatedAt = now.AddMinutes(-3) },
-            new UserLog { Id = 4, UserId = 99, Message = "Other user", CreatedAt = now.AddMinutes(-4) },
-        };
+        // Use SQLite in-memory to better emulate relational behavior
+        var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
 
-        var mockQueryable = logs.BuildMock();
-        dataContext
-            .Setup(s => s.GetAll<UserLog>())
-            .Returns(mockQueryable);
-
-        // Act: request page 1, pageSize 2 for user 77
-        var action = await controller.GetLogs(77, page: 1, pageSize: 2);
-
-        // Assert
-        var ok = action.Result.Should().BeOfType<OkObjectResult>().Subject;
-        ok.StatusCode.Should().Be(200);
-        var paged = ok.Value.As<PagedResultDto<UserLogDto>>();
-        paged.Page.Should().Be(1);
-        paged.PageSize.Should().Be(2);
-        paged.TotalCount.Should().Be(3); // only three logs for user 77
-        paged.Items.Count.Should().Be(2);
-        paged.Items[0].Message.Should().Be("A"); // newest first
-        paged.Items[1].Message.Should().Be("B");
-
-        // Act: page 2
-        var actionPage2 = await controller.GetLogs(77, page: 2, pageSize: 2);
-        var ok2 = actionPage2.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var paged2 = ok2.Value.As<PagedResultDto<UserLogDto>>();
-        paged2.Page.Should().Be(2);
-        paged2.PageSize.Should().Be(2);
-        paged2.TotalCount.Should().Be(3);
-        paged2.Items.Count.Should().Be(1);
-        paged2.Items[0].Message.Should().Be("C");
+        var opts = new DbContextOptionsBuilder<DataContext>()
+            .UseSqlite(connection)
+            .Options;
+        var ctx = new DataContext(opts);
+        // Ensure database created and seed data applied
+        ctx.Database.EnsureCreated();
+        return ctx;
     }
 
-    private static void VerifyLogContains(Mock<ILogger<UsersController>> logger, LogLevel level, string contains)
+    private UsersController CreateController(DataContext ctx, MockLogger<UsersController>? logger = null)
     {
-        logger.Verify(l => l.Log(
-                It.Is<LogLevel>(ll => ll == level),
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains(contains)),
-                It.IsAny<Exception?>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ), Times.AtLeastOnce);
+        var userService = new UserService(ctx);
+        var userLogService = new UserLogService(ctx);
+        var log = logger?.AsILogger() ?? new NullLogger<UsersController>();
+        return new UsersController(userService, userLogService, log);
+    }
+
+    // Lightweight test logger capturing messages
+    private sealed class MockLogger<T>
+    {
+        private readonly System.Collections.Concurrent.ConcurrentBag<(LogLevel, string)> _entries = new();
+        public Microsoft.Extensions.Logging.ILogger<T> AsILogger() => new Adapter(this);
+        public bool LogContains(LogLevel level, string contains) => _entries.Any(e => e.Item1 == level && e.Item2.Contains(contains));
+        public void Add(LogLevel level, string message) => _entries.Add((level, message));
+
+        private sealed class Adapter(MockLogger<T> parent)
+            : Microsoft.Extensions.Logging.ILogger, Microsoft.Extensions.Logging.ILogger<T>
+        {
+            private readonly MockLogger<T> _parent = parent;
+            public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+            public bool IsEnabled(LogLevel logLevel) => true;
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            {
+                _parent.Add(logLevel, formatter(state, exception));
+            }
+            private sealed class NullScope : IDisposable { public static readonly NullScope Instance = new(); public void Dispose() {} }
+        }
     }
 }

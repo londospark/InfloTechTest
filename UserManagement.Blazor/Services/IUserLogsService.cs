@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using UserManagement.Shared.DTOs;
 
 namespace UserManagement.Blazor.Services;

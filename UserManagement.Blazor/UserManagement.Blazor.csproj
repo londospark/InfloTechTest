@@ -4,6 +4,20 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        
+        <!-- Performance Optimizations -->
+        <!-- Enable IL trimming to remove unused code -->
+        <PublishTrimmed>true</PublishTrimmed>
+        
+        <!-- Enable AOT compilation for faster runtime performance -->
+        <RunAOTCompilation>true</RunAOTCompilation>
+        
+        <!-- Enable Brotli compression for smaller payloads -->
+        <BlazorEnableCompression>true</BlazorEnableCompression>
+        
+        <!-- Optimize for size -->
+        <BlazorWebAssemblyPreserveCollationData>false</BlazorWebAssemblyPreserveCollationData>
+        <BlazorWebAssemblyJiterpreter>true</BlazorWebAssemblyJiterpreter>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,9 +1,10 @@
 using System.Linq;
 using System.Threading.Tasks;
-using MockQueryable;
+using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
+using Microsoft.Data.Sqlite;
 
 namespace UserManagement.Services.Tests;
 
@@ -12,22 +13,21 @@ public class UserServiceTests
     [Fact]
     public void GetAll_WhenContextReturnsEntities_MustReturnSameEntities()
     {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var service = CreateService();
-        var users = SetupUsers();
+        var ctx = CreateContext();
+        var service = new UserService(ctx);
+        var users = SetupUsers(ctx);
 
-        // Act: Invokes the method under test with the arranged parameters.
         var result = service.GetAll();
 
-        // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().BeSameAs(users);
     }
 
     [Fact]
     public void FilterByActive_WhenContextReturnsActiveEntities_MustReturnAllEntities()
     {
-        var service = CreateService();
-        var users = SetupUsers(isActive: true);
+        var ctx = CreateContext();
+        var service = new UserService(ctx);
+        var users = SetupUsers(ctx, isActive: true);
 
         var result = service.FilterByActive(true);
 
@@ -37,8 +37,9 @@ public class UserServiceTests
     [Fact]
     public void FilterByActive_WhenContextReturnsInactiveEntities_MustReturnNoEntities()
     {
-        var service = CreateService();
-        _ = SetupUsers(isActive: false);
+        var ctx = CreateContext();
+        var service = new UserService(ctx);
+        _ = SetupUsers(ctx, isActive: false);
 
         var result = service.FilterByActive(true);
 
@@ -48,38 +49,30 @@ public class UserServiceTests
     [Fact]
     public async Task DeleteAsync_WhenUserExists_DeletesAndReturnsTrue()
     {
-        // Arrange
-        var service = CreateService();
-        var users = SetupUsers();
+        var ctx = CreateContext();
+        var service = new UserService(ctx);
+        var users = SetupUsers(ctx);
         var existing = users.First();
-        existing.Id = 10;
 
-        dataContext.Setup(dc => dc.DeleteAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
+        var result = await service.DeleteAsync(existing.Id);
 
-        // Act
-        var result = await service.DeleteAsync(10);
-
-        // Assert
         result.Should().BeTrue();
-        dataContext.Verify(dc => dc.DeleteAsync(It.Is<User>(u => u == existing)), Times.Once);
+        ctx.Users!.Any(u => u.Id == existing.Id).Should().BeFalse();
     }
 
     [Fact]
     public async Task DeleteAsync_WhenUserMissing_ReturnsFalseAndDoesNotDelete()
     {
-        // Arrange
-        var service = CreateService();
-        _ = SetupUsers();
+        var ctx = CreateContext();
+        var service = new UserService(ctx);
+        _ = SetupUsers(ctx);
 
-        // Act
         var result = await service.DeleteAsync(999);
 
-        // Assert
         result.Should().BeFalse();
-        dataContext.Verify(dc => dc.DeleteAsync(It.IsAny<User>()), Times.Never);
     }
 
-    private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
+    private static IQueryable<User> SetupUsers(DataContext ctx, string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
     {
         var users = new[]
         {
@@ -92,14 +85,27 @@ public class UserServiceTests
             }
         };
 
-        var mockQueryable = users.BuildMock();
-        dataContext
-            .Setup(s => s.GetAll<User>())
-            .Returns(mockQueryable);
-
-        return mockQueryable;
+        ctx.Users!.AddRange(users);
+        ctx.SaveChanges();
+        return ctx.Users.AsQueryable();
     }
 
-    private readonly Mock<IDataContext> dataContext = new();
-    private UserService CreateService() => new(dataContext.Object);
+    private static DataContext CreateContext()
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+
+        var opts = new DbContextOptionsBuilder<DataContext>()
+            .UseSqlite(connection)
+            .Options;
+        var ctx = new DataContext(opts);
+        ctx.Database.EnsureCreated();
+
+        // Clear seeded data to provide isolated test state
+        ctx.Users?.RemoveRange(ctx.Users);
+        ctx.UserLogs?.RemoveRange(ctx.UserLogs);
+        ctx.SaveChanges();
+
+        return ctx;
+    }
 }
