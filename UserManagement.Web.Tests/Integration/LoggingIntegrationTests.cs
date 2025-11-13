@@ -45,7 +45,7 @@ public class LoggingIntegrationTests
         var userLogService = sp.GetRequiredService<IUserLogService>();
         var controller = new UsersController(userService, userLogService, dbLogger);
 
-        var req = new UserManagement.Shared.DTOs.CreateUserRequestDto("Int", "Test", "int@test.com", new System.DateTime(1990, 1, 1), true);
+        var req = new Shared.DTOs.CreateUserRequestDto("Int", "Test", "int@test.com", new System.DateTime(1990, 1, 1), true);
 
         // Act: call Create
         var action = controller.Create(req);

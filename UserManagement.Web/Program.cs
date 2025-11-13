@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using UserManagement.ServiceDefaults;
 using UserManagement.Services.Extensions;
 using UserManagement.Web.Controllers;
 using UserManagement.Web.Helpers;
+using UserManagement.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,11 +42,39 @@ builder.Services.AddCors(o =>
 {
     o.AddPolicy(corsPolicyName, p =>
     {
-        p.AllowAnyHeader().AllowAnyMethod().WithOrigins(
-            builder.Configuration["FrontendOrigin"] ?? "http://localhost:0"
-        );
+        var frontendOrigin = builder.Configuration["FrontendOrigin"];
+        
+        if (!string.IsNullOrEmpty(frontendOrigin))
+        {
+            // Production or Aspire: use specific origin with credentials for SignalR
+            p.WithOrigins(frontendOrigin)
+             .AllowAnyHeader()
+             .AllowAnyMethod()
+             .AllowCredentials();
+        }
+        else if (builder.Environment.IsDevelopment())
+        {
+            // Development fallback: allow localhost on common ports with credentials
+            p.WithOrigins(
+                "https://localhost:5001",
+                "https://localhost:7183",
+                "http://localhost:5000")
+             .AllowAnyHeader()
+             .AllowAnyMethod()
+             .AllowCredentials();
+        }
+        else
+        {
+            // Production without explicit origin: fail fast rather than allow any origin
+            throw new InvalidOperationException(
+                "FrontendOrigin configuration is required in production environments. " +
+                "Set the FrontendOrigin environment variable or configuration value.");
+        }
     });
 });
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -85,5 +115,8 @@ app.UseCors(corsPolicyName);
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hub
+app.MapHub<UserLogsHub>("/hubs/userlogs");
 
 app.Run();

@@ -13,4 +13,11 @@ builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new(apiBase) });
 // Strongly-typed API client
 builder.Services.AddScoped<IUsersClient, UsersClient>();
 
+// User logs SignalR service - use scoped lifetime to match HttpClient
+builder.Services.AddScoped<IUserLogsService, UserLogsService>(sp => 
+{
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    return new UserLogsService(httpClient);
+});
+
 await builder.Build().RunAsync();

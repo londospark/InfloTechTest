@@ -21,7 +21,7 @@ public class AddPageTests : BunitContext
         Services.AddSingleton(client.Object);
 
         // Act
-        var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
+        var cut = Render<Blazor.Pages.Users.Add>();
 
         // Assert
         cut.Markup.Should().Contain("Forename");
@@ -41,7 +41,7 @@ public class AddPageTests : BunitContext
     {
         // Arrange
         Services.AddSingleton(client.Object);
-        var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
+        var cut = Render<Blazor.Pages.Users.Add>();
 
         // Act: submit without filling fields to trigger validation
         cut.Find("form").Submit();
@@ -64,7 +64,7 @@ public class AddPageTests : BunitContext
             .ReturnsAsync(new UserListItemDto(1, "Jane", "Doe", "jane.doe@example.com", true, new(1992, 5, 10)));
 
         Services.AddSingleton(client.Object);
-        var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
+        var cut = Render<Blazor.Pages.Users.Add>();
 
         // Act: fill in form and submit
         cut.Find("#forename").Change("Jane");
@@ -85,7 +85,7 @@ public class AddPageTests : BunitContext
     {
         // Arrange
         Services.AddSingleton(client.Object);
-        var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
+        var cut = Render<Blazor.Pages.Users.Add>();
 
         // Act: fill valid fields but future DOB
         cut.Find("#forename").Change("Jane");

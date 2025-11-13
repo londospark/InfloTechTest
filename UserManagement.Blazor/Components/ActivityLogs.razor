@@ -1,0 +1,197 @@
+@using UserManagement.Shared.DTOs
+@inject Services.IUsersClient UsersClient
+@inject IServiceProvider ServiceProvider
+@inject Microsoft.Extensions.DependencyInjection.IServiceScopeFactory ServiceScopeFactory
+@using UserManagement.Blazor.Services
+@using Microsoft.Extensions.DependencyInjection
+@implements IAsyncDisposable
+@implements IDisposable
+
+<div class="card">
+    <div class="card-body">
+        <h5>Activity Logs</h5>
+
+        @if (logsLoading)
+        {
+            <p>Loading logs...</p>
+        }
+        else if (logs is null || !logs.Items.Any())
+        {
+            <p>No logs found.</p>
+        }
+        else
+        {
+            <ul class="list-group mb-2">
+                @foreach (var log in logs.Items)
+                {
+                    <li class="list-group-item">
+                        <div><strong>@log.CreatedAt.ToString("g")</strong></div>
+                        <div>@log.Message</div>
+                    </li>
+                }
+            </ul>
+
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="#" @onclick="@(async e => await GoToPreviousPage())" @onclick:preventDefault="true">Previous</a>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link">Page @currentPage</span></li>
+                    <li class="page-item @(logs.HasMore ? "" : "disabled")">
+                        <a class="page-link" href="#" @onclick="@(async e => await GoToNextPage())" @onclick:preventDefault="true">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public long UserId { get; set; }
+
+    [Parameter]
+    public int PageSize { get; set; } = 5;
+
+    private bool logsLoading;
+    private PagedResultDto<UserLogDto>? logs;
+    private int currentPage = 1;
+    private IUserLogsService? _userLogsService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogsAsync();
+        await InitializeSignalRAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload if UserId changes
+        await LoadLogsAsync();
+    }
+
+    private async Task InitializeSignalRAsync()
+    {
+        try
+        {
+            _userLogsService = ServiceProvider.GetService<IUserLogsService>();
+            if (_userLogsService is not null)
+            {
+                await _userLogsService.StartAsync();
+                await _userLogsService.JoinUserGroup(UserId);
+                _userLogsService.LogReceived += OnLogReceived;
+            }
+        }
+        catch (Exception)
+        {
+            // Ignore SignalR initialization errors - logs will still work via polling
+        }
+    }
+
+    private void OnLogReceived(UserLogDto dto)
+    {
+        if (dto.UserId != UserId) return;
+
+        // If we're on the first page, prepend the new log
+        if (currentPage == 1 && logs is not null)
+        {
+            var items = logs.Items.ToList();
+            items.Insert(0, dto);
+            
+            // Keep only the current page size of items
+            if (items.Count > PageSize)
+            {
+                items.RemoveAt(items.Count - 1);
+            }
+
+            // Update with new total count and recalculated HasMore
+            var newTotalCount = logs.TotalCount + 1;
+            logs = new PagedResultDto<UserLogDto>(items, currentPage, PageSize, newTotalCount);
+        }
+        else
+        {
+            // Not on first page - just update total count
+            if (logs is not null)
+            {
+                var newTotalCount = logs.TotalCount + 1;
+                logs = new PagedResultDto<UserLogDto>(logs.Items, logs.Page, logs.PageSize, newTotalCount);
+            }
+        }
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        logsLoading = true;
+        logs = null;
+        try
+        {
+            logs = await UsersClient.GetUserLogsAsync(UserId, currentPage, PageSize);
+        }
+        catch (Exception)
+        {
+            // Show empty on error
+            logs = new PagedResultDto<UserLogDto>(new System.Collections.Generic.List<UserLogDto>(), currentPage, PageSize, 0);
+        }
+        finally
+        {
+            logsLoading = false;
+        }
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (currentPage <= 1) return;
+        currentPage--;
+        await LoadLogsAsync();
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (logs is null || !logs.HasMore) return;
+        currentPage++;
+        await LoadLogsAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_userLogsService is not null)
+            {
+                _userLogsService.LogReceived -= OnLogReceived;
+                await _userLogsService.LeaveUserGroup(UserId);
+                await _userLogsService.StopAsync();
+            }
+        }
+        catch
+        {
+            // Ignore errors during cleanup
+        }
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            if (_userLogsService is not null)
+            {
+                _userLogsService.LogReceived -= OnLogReceived;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _userLogsService.LeaveUserGroup(UserId);
+                        await _userLogsService.StopAsync();
+                    }
+                    catch { }
+                });
+            }
+        }
+        catch
+        {
+            // Ignore errors during synchronous dispose
+        }
+    }
+}

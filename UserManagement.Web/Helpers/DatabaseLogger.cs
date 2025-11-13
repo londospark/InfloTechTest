@@ -1,10 +1,13 @@
 using System;
 using System.Linq;
 using System.Threading;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
+using UserManagement.Web.Hubs;
+using UserManagement.Shared.DTOs;
 
 namespace UserManagement.Web.Helpers;
 
@@ -104,6 +107,15 @@ public sealed class DatabaseLogger<T>(ILoggerFactory loggerFactory, IServiceScop
 		};
 
 		userLogService.Add(log);
+
+		// If SignalR hub is registered, publish an event for the specific user.
+		var hubContext = scope.ServiceProvider.GetService<IHubContext<UserLogsHub>>();
+		if (hubContext is not null)
+		{
+			var dto = new UserLogDto(log.Id, log.UserId, log.Message, log.CreatedAt);
+			// Send to a user-specific group using user id as identifier
+			_ = hubContext.Clients.Group($"user-{log.UserId}").SendAsync("LogAdded", dto);
+		}
 	}
 
 	private static long? ExtractUserId<TState>(TState state)
