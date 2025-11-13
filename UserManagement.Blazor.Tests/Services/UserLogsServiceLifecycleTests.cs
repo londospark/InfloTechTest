@@ -32,17 +32,13 @@ public class UserLogsServiceLifecycleTests
             return Task.CompletedTask;
         }
 
-        public Task InvokeAsync(string method, params object[] args)
-        {
+        public Task InvokeAsync(string method, params object[] args) =>
             // record invocation or no-op
-            return Task.CompletedTask;
-        }
+            Task.CompletedTask;
 
-        public void On<T>(string methodName, Action<T> handler)
-        {
+        public void On<T>(string methodName, Action<T> handler) =>
             // store handler and invoke when needed
             _on = (o) => handler((T)o!);
-        }
 
         private Action<object?>? _on;
 

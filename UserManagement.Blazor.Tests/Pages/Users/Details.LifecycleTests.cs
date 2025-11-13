@@ -58,9 +58,6 @@ public class DetailsLifecycleTests : BunitContext
         public Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(1, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<UserListItemDto> UpdateUserAsync(long id, CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
-        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(new PagedResultDto<UserLogDto>(new System.Collections.Generic.List<UserLogDto>(), page, pageSize, 0));
-        }
+        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new PagedResultDto<UserLogDto>(new System.Collections.Generic.List<UserLogDto>(), page, pageSize, 0));
     }
 }

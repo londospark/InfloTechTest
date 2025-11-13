@@ -292,20 +292,17 @@ public class ActivityLogsTests : BunitContext
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<UserListItemDto> UpdateUserAsync(long id, CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
 
-        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(new PagedResultDto<UserLogDto>(new List<UserLogDto>(), page, pageSize, 0));
-        }
+        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new PagedResultDto<UserLogDto>(new List<UserLogDto>(), page, pageSize, 0));
     }
 
     private sealed class FakeUsersClientPaging : IUsersClient
     {
-        private readonly List<UserLogDto> _all = new()
-        {
+        private readonly List<UserLogDto> _all =
+        [
             new UserLogDto(1, 1, "Log 1", DateTime.UtcNow.AddMinutes(-3)),
             new UserLogDto(2, 1, "Log 2", DateTime.UtcNow.AddMinutes(-2)),
             new UserLogDto(3, 1, "Log 3", DateTime.UtcNow.AddMinutes(-1))
-        };
+        ];
 
         public Task<UserListDto> GetUsersAsync(System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
         public Task<UserListDto> GetUsersByActiveAsync(bool isActive, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListDto([]));
@@ -352,10 +349,7 @@ public class ActivityLogsTests : BunitContext
         public Task DeleteUserAsync(long id, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<UserListItemDto> UpdateUserAsync(long id, CreateUserRequestDto request, System.Threading.CancellationToken cancellationToken = default) => Task.FromResult(new UserListItemDto(id, request.Forename, request.Surname, request.Email, request.IsActive, request.DateOfBirth));
 
-        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default)
-        {
-            throw new InvalidOperationException("Simulated client failure");
-        }
+        public Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, System.Threading.CancellationToken cancellationToken = default) => throw new InvalidOperationException("Simulated client failure");
     }
 
     private sealed class FakeUserLogsService : IUserLogsService, IDisposable

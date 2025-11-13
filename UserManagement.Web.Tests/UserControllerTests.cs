@@ -376,7 +376,7 @@ public class UserControllerTests
     // Lightweight test logger capturing messages
     private sealed class MockLogger<T>
     {
-        private readonly System.Collections.Concurrent.ConcurrentBag<(LogLevel, string)> _entries = new();
+        private readonly System.Collections.Concurrent.ConcurrentBag<(LogLevel, string)> _entries = [];
         public ILogger<T> AsILogger() => new Adapter(this);
         public bool LogContains(LogLevel level, string contains) => _entries.Any(e => e.Item1 == level && e.Item2.Contains(contains));
         public void Add(LogLevel level, string message) => _entries.Add((level, message));
@@ -387,10 +387,7 @@ public class UserControllerTests
             private readonly MockLogger<T> _parent = parent;
             public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
             public bool IsEnabled(LogLevel logLevel) => true;
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-            {
-                _parent.Add(logLevel, formatter(state, exception));
-            }
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => _parent.Add(logLevel, formatter(state, exception));
             private sealed class NullScope : IDisposable { public static readonly NullScope Instance = new(); public void Dispose() { } }
         }
     }

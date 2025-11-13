@@ -9,9 +9,7 @@ namespace UserManagement.Data.Migrations
     public partial class AddUserLogs : Migration
     {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.CreateTable(
+        protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.CreateTable(
                 name: "UserLogs",
                 columns: table => new
                 {
@@ -25,13 +23,9 @@ namespace UserManagement.Data.Migrations
                 {
                     table.PrimaryKey("PK_UserLogs", x => x.Id);
                 });
-        }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(
+        protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropTable(
                 name: "UserLogs");
-        }
     }
 }

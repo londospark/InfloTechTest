@@ -12,13 +12,13 @@ public class HubConnectionWrapperTests
 {
     private class FakeHubConnection : IUserLogsHubConnection
     {
-        public List<string> InvokedMethods = new();
-        public List<object[]> InvokedArgs = new();
+        public List<string> InvokedMethods = [];
+        public List<object[]> InvokedArgs = [];
         public bool Started { get; private set; }
         public bool Stopped { get; private set; }
         public bool Disposed { get; private set; }
         public HubConnectionState State { get; set; } = HubConnectionState.Disconnected;
-        private readonly Dictionary<string, Delegate> _handlers = new();
+        private readonly Dictionary<string, Delegate> _handlers = [];
         public Task StartAsync()
         {
             Started = true;
@@ -37,10 +37,7 @@ public class HubConnectionWrapperTests
             InvokedArgs.Add(args);
             return Task.CompletedTask;
         }
-        public void On<T>(string methodName, Action<T> handler)
-        {
-            _handlers[methodName] = handler;
-        }
+        public void On<T>(string methodName, Action<T> handler) => _handlers[methodName] = handler;
         public void Raise<T>(string methodName, T arg)
         {
             if (_handlers.TryGetValue(methodName, out var del) && del is Action<T> act)

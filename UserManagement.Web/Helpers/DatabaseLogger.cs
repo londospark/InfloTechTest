@@ -17,13 +17,13 @@ namespace UserManagement.Web.Helpers;
 /// <typeparam name="T">The category type for the logger.</typeparam>
 public sealed class DatabaseLogger<T>(ILoggerFactory loggerFactory, IServiceScopeFactory scopeFactory, ILogger? forwardLogger = null) : ILogger<T>
 {
-    private static readonly HashSet<LogLevel> PersistedLevels = new()
-    {
+    private static readonly HashSet<LogLevel> PersistedLevels =
+    [
         LogLevel.Information,
         LogLevel.Warning,
         LogLevel.Error,
         LogLevel.Critical
-    };
+    ];
 
     private readonly ILogger _innerLogger = loggerFactory.CreateLogger(typeof(T));
     private readonly ILogger? _forwardLogger = forwardLogger;

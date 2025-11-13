@@ -15,10 +15,7 @@ public class ListPageTests : BunitContext
 {
     private readonly Mock<IUsersClient> usersClient = new();
 
-    private void RegisterServices()
-    {
-        Services.AddScoped(_ => usersClient.Object);
-    }
+    private void RegisterServices() => Services.AddScoped(_ => usersClient.Object);
 
     [Fact]
     public void RendersLoadingInitially()

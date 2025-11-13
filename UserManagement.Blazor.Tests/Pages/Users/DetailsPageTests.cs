@@ -16,10 +16,7 @@ public class DetailsPageTests : BunitContext
 {
     private readonly Mock<IUsersClient> usersClient = new();
 
-    private void Register()
-    {
-        Services.AddScoped(_ => usersClient.Object);
-    }
+    private void Register() => Services.AddScoped(_ => usersClient.Object);
 
     [Fact]
     public async Task Save_CallsUpdateAndUpdatesUi()
