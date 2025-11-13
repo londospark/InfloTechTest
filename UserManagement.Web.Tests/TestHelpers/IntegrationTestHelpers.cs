@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UserManagement.Data;
@@ -28,18 +29,17 @@ public static class IntegrationTestHelpers
                                              {
                                                  builder.ConfigureServices(services =>
                                                  {
-                                                     // Add configuration that instructs the app to skip SQL Server registration
-                                                     services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-                                                         .AddInMemoryCollection(new[]
-                                                         {
-                        new KeyValuePair<string, string?>("SkipDataAccessRegistration", "true")
-                                                         })
-                                                         .Build());
-
-                                                     // Remove existing DataContext registrations
+                                                     // Remove all EF Core related registrations for DataContext
                                                      var descriptors = services
-                                                         .Where(d => d.ServiceType == typeof(DbContextOptions<DataContext>) ||
-                                                                    d.ServiceType == typeof(DataContext))
+                                                         .Where(d => 
+                                                             d.ServiceType == typeof(DbContextOptions<DataContext>) ||
+                                                             d.ServiceType == typeof(DbContextOptions) ||
+                                                             d.ServiceType == typeof(DataContext) ||
+                                                             d.ServiceType == typeof(IDataContext) ||
+                                                             (d.ServiceType.IsGenericType && d.ServiceType.GetGenericTypeDefinition() == typeof(DbContextOptions<>)) ||
+                                                             (d.ServiceType.IsGenericType && d.ServiceType.GetGenericTypeDefinition() == typeof(IDbContextFactory<>)) ||
+                                                             d.ServiceType == typeof(IDbContextOptions) ||
+                                                             (d.ImplementationType?.Name.Contains("DataContext") ?? false))
                                                          .ToList();
 
                                                      foreach (var descriptor in descriptors)
@@ -49,6 +49,9 @@ public static class IntegrationTestHelpers
 
                                                      // Add SQLite in-memory DbContext using the open connection
                                                      services.AddDbContext<DataContext>(opts => opts.UseSqlite(connection));
+                                                     
+                                                     // Re-register IDataContext mapping
+                                                     services.AddScoped<IDataContext>(sp => sp.GetRequiredService<DataContext>());
                                                  });
                                              });
 

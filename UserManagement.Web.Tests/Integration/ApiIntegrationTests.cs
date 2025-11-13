@@ -29,50 +29,54 @@ public class ApiIntegrationTests(WebApplicationFactory<Program> Factory) : IClas
         var connection = new SqliteConnection(connectionString);
         connection.Open();
 
-        var factory = Factory.WithWebHostBuilder(builder =>
+        // Set environment variable BEFORE creating the factory so it's available during startup
+        Environment.SetEnvironmentVariable("SkipDataAccessRegistration", "true");
+
+        try
         {
-            builder.ConfigureServices(services =>
+            var factory = Factory.WithWebHostBuilder(builder =>
             {
-                // Add configuration that instructs the app to skip SQL Server registration
-                services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(new[] {
-                    new KeyValuePair<string, string?>("SkipDataAccessRegistration","true")
-                }).Build());
+                builder.ConfigureServices(services =>
+                {
+                    // remove existing DataContext registrations if any
+                    var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DataContext>) || d.ServiceType == typeof(DataContext)).ToList();
+                    foreach (var d in descriptors)
+                        services.Remove(d);
 
-                // remove existing DataContext registrations
-                var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DataContext>) || d.ServiceType == typeof(DataContext)).ToList();
-                foreach (var d in descriptors)
-                    services.Remove(d);
-
-                // add SQLite in-memory DbContext using the open connection
-                services.AddDbContext<DataContext>(opts => opts.UseSqlite(connection));
+                    // add SQLite in-memory DbContext using the open connection
+                    services.AddDbContext<DataContext>(opts => opts.UseSqlite(connection));
+                });
             });
-        });
 
-        // Ensure DB schema is created using a local DataContext instance to avoid touching the host's DataContext
-        var localOpts = new DbContextOptionsBuilder<DataContext>().UseSqlite(connection).Options;
-        using (var ctx = new DataContext(localOpts))
-        {
-            ctx.Database.EnsureCreated();
+            // Ensure DB schema is created using a local DataContext instance to avoid touching the host's DataContext
+            var localOpts = new DbContextOptionsBuilder<DataContext>().UseSqlite(connection).Options;
+            using (var ctx = new DataContext(localOpts))
+            {
+                ctx.Database.EnsureCreated();
+            }
+
+            var client = factory.CreateClient();
+
+            // Act
+            var resp = await client.GetAsync("/api/users");
+
+            // Assert
+            resp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+
+            // Check DB for logs using local DataContext against the same connection
+            using (var ctx2 = new DataContext(localOpts))
+            {
+                var logs = await ctx2.UserLogs!.ToListAsync();
+                logs.Should().BeEmpty();
+            }
         }
-
-        var client = factory.CreateClient();
-
-        // Act
-        var resp = await client.GetAsync("/api/users");
-
-        // Assert
-        resp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
-
-        // Check DB for logs using local DataContext against the same connection
-        using (var ctx2 = new DataContext(localOpts))
+        finally
         {
-            var logs = await ctx2.UserLogs!.ToListAsync();
-            logs.Should().BeEmpty();
+            // Clean up
+            Environment.SetEnvironmentVariable("SkipDataAccessRegistration", null);
+            connection.Close();
+            connection.Dispose();
         }
-
-        // Clean up
-        connection.Close();
-        connection.Dispose();
     }
 
     [Fact]
@@ -84,50 +88,56 @@ public class ApiIntegrationTests(WebApplicationFactory<Program> Factory) : IClas
         var connection = new SqliteConnection(connectionString);
         connection.Open();
 
-        var factory = Factory.WithWebHostBuilder(builder =>
+        // Set environment variable BEFORE creating the factory
+        Environment.SetEnvironmentVariable("SkipDataAccessRegistration", "true");
+
+        try
         {
-            builder.ConfigureServices(services =>
+            var factory = Factory.WithWebHostBuilder(builder =>
             {
-                services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(new[] {
-                    new KeyValuePair<string, string?>("SkipDataAccessRegistration","true")
-                }).Build());
+                builder.ConfigureServices(services =>
+                {
+                    // remove existing DataContext registrations if any
+                    var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DataContext>) || d.ServiceType == typeof(DataContext)).ToList();
+                    foreach (var d in descriptors)
+                        services.Remove(d);
 
-                var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DataContext>) || d.ServiceType == typeof(DataContext)).ToList();
-                foreach (var d in descriptors)
-                    services.Remove(d);
-
-                services.AddDbContext<DataContext>(opts => opts.UseSqlite(connection));
+                    services.AddDbContext<DataContext>(opts => opts.UseSqlite(connection));
+                });
             });
-        });
 
-        // Ensure DB schema is created using a local DataContext instance
-        var localOpts = new DbContextOptionsBuilder<DataContext>().UseSqlite(connection).Options;
-        using (var ctx = new DataContext(localOpts))
-        {
-            ctx.Database.EnsureCreated();
+            // Ensure DB schema is created using a local DataContext instance
+            var localOpts = new DbContextOptionsBuilder<DataContext>().UseSqlite(connection).Options;
+            using (var ctx = new DataContext(localOpts))
+            {
+                ctx.Database.EnsureCreated();
+            }
+
+            var client = factory.CreateClient();
+
+            var req = new CreateUserRequestDto("IntApi", "Test", "intapi@test.com", new System.DateTime(1990,1,1), true);
+            var json = JsonSerializer.Serialize(req);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            // Act
+            var resp = await client.PostAsync("/api/users", content);
+
+            // Assert
+            resp.StatusCode.Should().Be(HttpStatusCode.Created);
+
+            using (var ctx2 = new DataContext(localOpts))
+            {
+                var logs = await ctx2.UserLogs!.ToListAsync();
+                logs.Should().NotBeEmpty();
+                logs.First().Message.Should().Contain("Created user id");
+            }
         }
-
-        var client = factory.CreateClient();
-
-        var req = new CreateUserRequestDto("IntApi", "Test", "intapi@test.com", new System.DateTime(1990,1,1), true);
-        var json = JsonSerializer.Serialize(req);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        // Act
-        var resp = await client.PostAsync("/api/users", content);
-
-        // Assert
-        resp.StatusCode.Should().Be(HttpStatusCode.Created);
-
-        using (var ctx2 = new DataContext(localOpts))
+        finally
         {
-            var logs = await ctx2.UserLogs!.ToListAsync();
-            logs.Should().NotBeEmpty();
-            logs.First().Message.Should().Contain("Created user id");
+            // Clean up
+            Environment.SetEnvironmentVariable("SkipDataAccessRegistration", null);
+            connection.Close();
+            connection.Dispose();
         }
-
-        // Clean up
-        connection.Close();
-        connection.Dispose();
     }
 }
