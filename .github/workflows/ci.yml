@@ -85,10 +85,3 @@ jobs:
         env:
           # Optional: set CODECOV_TOKEN in repository secrets if uploading from private repos
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          files: ./TestResults/test_results.trx
-          token: ${{ secrets.CODECOV_TOKEN }}

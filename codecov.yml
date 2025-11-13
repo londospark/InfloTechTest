@@ -1,0 +1,21 @@
+# Codecov configuration - exclude migrations folders from coverage
+coverage:
+  precision: 2
+  round: down
+  status:
+    project:
+      default:
+        target: 80
+
+# Ignore migration folders across all projects (case-insensitive)
+ignore:
+  - "**/Migrations/**"
+  - "**/migrations/**"
+  - "**/UserManagement.ServiceDefaults/**"
+  - "**/UserManagement.Data/**/Extensions/**"
+  - "**/userManagement.data/**/extensions/**"
+
+# Notify / require CI to pass before updating status
+codecov:
+  notify:
+    require_ci_to_pass: true
