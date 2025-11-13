@@ -178,15 +178,15 @@
             if (_userLogsService is not null)
             {
                 _userLogsService.LogReceived -= OnLogReceived;
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        await _userLogsService.LeaveUserGroup(UserId);
-                        await _userLogsService.StopAsync();
-                    }
-                    catch { }
-                });
+                    _userLogsService.LeaveUserGroup(UserId).GetAwaiter().GetResult();
+                    _userLogsService.StopAsync().GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    // Ignore errors during async cleanup
+                }
             }
         }
         catch
