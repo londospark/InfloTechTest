@@ -17,7 +17,7 @@ public class ListPageTests : BunitContext
 
     private void RegisterServices()
     {
-        Services.AddScoped(_ => this.usersClient.Object);
+        Services.AddScoped(_ => usersClient.Object);
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersAsync(default))
             .Returns(async () =>
             {
@@ -49,7 +49,7 @@ public class ListPageTests : BunitContext
         var users = new UserListDto([
             new(1, "John", "Doe", "john@example.com", true, dob)
         ]);
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(users);
 
@@ -74,9 +74,9 @@ public class ListPageTests : BunitContext
         // Arrange
         RegisterServices();
         var users = new UserListDto([
-            new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 2, 1))
+            new(1, "John", "Doe", "john@example.com", true, new(1990, 2, 1))
         ]);
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(users);
 
@@ -97,7 +97,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(new UserListDto([]));
 
@@ -114,10 +114,10 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(new UserListDto([]));
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersByActiveAsync(true, default))
             .ReturnsAsync(new UserListDto([]));
 
@@ -130,7 +130,7 @@ public class ListPageTests : BunitContext
         radioActive.Change("Active");
 
         // Assert
-        this.usersClient.Verify(c => c.GetUsersByActiveAsync(true, default), Times.Once);
+        usersClient.Verify(c => c.GetUsersByActiveAsync(true, default), Times.Once);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        this.usersClient
+        usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ThrowsAsync(new InvalidOperationException("Boom"));
 
@@ -158,10 +158,10 @@ public class ListPageTests : BunitContext
         RegisterServices();
         // initial list has one user with id 1
         var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new(1990, 1, 1))]);
-        this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
+        usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
         // After deletion, subsequent load returns empty
-        this.usersClient.Setup(c => c.GetUsersByActiveAsync(It.IsAny<bool>(), default)).ReturnsAsync(new UserListDto([]));
-        this.usersClient.Setup(c => c.DeleteUserAsync(1, default)).Returns(Task.CompletedTask);
+        usersClient.Setup(c => c.GetUsersByActiveAsync(It.IsAny<bool>(), default)).ReturnsAsync(new UserListDto([]));
+        usersClient.Setup(c => c.DeleteUserAsync(1, default)).Returns(Task.CompletedTask);
 
         // Act
         var cut = Render<List>();
@@ -172,7 +172,7 @@ public class ListPageTests : BunitContext
         cut.Find("button[data-testid='confirm-delete']").Click();
 
         // Assert
-        this.usersClient.Verify(c => c.DeleteUserAsync(1, default), Times.Once);
+        usersClient.Verify(c => c.DeleteUserAsync(1, default), Times.Once);
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public class ListPageTests : BunitContext
         // Arrange
         RegisterServices();
         var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new(1990, 1, 1))]);
-        this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
+        usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
 
         // Act
         var cut = Render<List>();
@@ -192,7 +192,7 @@ public class ListPageTests : BunitContext
         cut.Find("button[data-testid='cancel-delete']").Click();
 
         // Assert
-        this.usersClient.Verify(c => c.DeleteUserAsync(It.IsAny<long>(), default), Times.Never);
+        usersClient.Verify(c => c.DeleteUserAsync(It.IsAny<long>(), default), Times.Never);
     }
 
     [Fact]
@@ -201,7 +201,7 @@ public class ListPageTests : BunitContext
         // Arrange
         RegisterServices();
         var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new(1990, 1, 1))]);
-        this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
+        usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
 
         // Act
         var cut = Render<List>();

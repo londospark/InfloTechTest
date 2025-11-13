@@ -18,7 +18,7 @@ public class AddPageTests : BunitContext
     public void RendersFormWithFields()
     {
         // Arrange
-        Services.AddSingleton(this.client.Object);
+        Services.AddSingleton(client.Object);
 
         // Act
         var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
@@ -40,7 +40,7 @@ public class AddPageTests : BunitContext
     public void Submit_WithInvalidModel_ShowsValidationMessages()
     {
         // Arrange
-        Services.AddSingleton(this.client.Object);
+        Services.AddSingleton(client.Object);
         var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
 
         // Act: submit without filling fields to trigger validation
@@ -59,11 +59,11 @@ public class AddPageTests : BunitContext
         var nav = new TestNav();
         Services.AddSingleton<NavigationManager>(nav);
 
-        this.client
+        client
             .Setup(c => c.CreateUserAsync(It.IsAny<CreateUserRequestDto>(), default))
             .ReturnsAsync(new UserListItemDto(1, "Jane", "Doe", "jane.doe@example.com", true, new(1992, 5, 10)));
 
-        Services.AddSingleton(this.client.Object);
+        Services.AddSingleton(client.Object);
         var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
 
         // Act: fill in form and submit
@@ -76,7 +76,7 @@ public class AddPageTests : BunitContext
         cut.Find("form").Submit();
 
         // Assert
-        this.client.Verify(c => c.CreateUserAsync(It.Is<CreateUserRequestDto>(r => r.Forename == "Jane" && r.Surname == "Doe" && r.Email == "jane.doe@example.com" && r.IsActive), default), Times.Once);
+        client.Verify(c => c.CreateUserAsync(It.Is<CreateUserRequestDto>(r => r.Forename == "Jane" && r.Surname == "Doe" && r.Email == "jane.doe@example.com" && r.IsActive), default), Times.Once);
         nav.Uri.Should().EndWith("/users");
     }
 
@@ -84,7 +84,7 @@ public class AddPageTests : BunitContext
     public void Submit_WithFutureDob_ShowsValidationMessage_AndDoesNotCallClient()
     {
         // Arrange
-        Services.AddSingleton(this.client.Object);
+        Services.AddSingleton(client.Object);
         var cut = Render<UserManagement.Blazor.Pages.Users.Add>();
 
         // Act: fill valid fields but future DOB
@@ -99,7 +99,7 @@ public class AddPageTests : BunitContext
 
         // Assert: validation message appears from IValidatableObject rule
         cut.Markup.Should().Contain("Date of Birth cannot be in the future.");
-        this.client.Verify(c => c.CreateUserAsync(It.IsAny<CreateUserRequestDto>(), default), Times.Never);
+        client.Verify(c => c.CreateUserAsync(It.IsAny<CreateUserRequestDto>(), default), Times.Never);
     }
 
     private sealed class TestNav : NavigationManager

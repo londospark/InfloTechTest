@@ -2,11 +2,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Helpers;
-using Microsoft.Extensions.Logging;
 
 namespace UserManagement.Web.Controllers;
 
@@ -22,7 +22,7 @@ namespace UserManagement.Web.Controllers;
 [Route("api/users")]
 [Tags("Users")]
 [Produces("application/json")]
-public class UsersController(IUserService userService, ILogger<UsersController> logger) : ControllerBase
+public class UsersController(IUserService userService, IUserLogService userLogService, ILogger<UsersController> logger) : ControllerBase
 {
     /// <summary>
     /// Validates a Create/Update user request using data annotations and prepares a problem details
@@ -47,7 +47,7 @@ public class UsersController(IUserService userService, ILogger<UsersController> 
                 var memberName = vr.MemberNames.FirstOrDefault() ?? string.Empty;
                 ModelState.AddModelError(memberName, vr.ErrorMessage ?? "Validation error");
             }
-            problem = new ValidationProblemDetails(ModelState);
+            problem = new(ModelState);
             return false;
         }
 
@@ -106,6 +106,7 @@ public class UsersController(IUserService userService, ILogger<UsersController> 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<UserListItemDto> GetById(long id)
     {
+        using var scope = BeginUserScope(id);
         logger.LogInformation("Getting user by id {UserId}", id);
         var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
         if (entity is null)
@@ -135,6 +136,7 @@ public class UsersController(IUserService userService, ILogger<UsersController> 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<UserListItemDto> Update(long id, [FromBody] CreateUserRequestDto request)
     {
+        using var scope = BeginUserScope(id);
         if (!TryValidateRequest(request, out var problem))
         {
             logger.LogWarning("Update validation failed for user id {UserId}. Errors: {Errors}", id, problem?.Errors);
@@ -201,8 +203,43 @@ public class UsersController(IUserService userService, ILogger<UsersController> 
 
         var added = userService.Add(user);
         var dto = added.Map();
+        using var scope = BeginUserScope(dto.Id);
         logger.LogInformation("Created user id {UserId} with email {Email}", dto.Id, dto.Email);
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+    }
+
+    /// <summary>
+    /// Retrieves user logs for the specified user id with paging.
+    /// </summary>
+    /// <param name="id">The user identifier.</param>
+    /// <param name="page">The 1-based page number (defaults to 1).</param>
+    /// <param name="pageSize">The number of items per page (defaults to 20, max 100).</param>
+    /// <returns>200 OK with a paged list of <see cref="UserLog"/> entries.</returns>
+    /// <response code="200">Returns the paged list of logs.</response>
+    [HttpGet("{id:long}/logs")]
+    [ProducesResponseType(typeof(PagedResultDto<UserLogDto>), StatusCodes.Status200OK)]
+    public ActionResult<PagedResultDto<UserLogDto>> GetLogs(long id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        using var scope = BeginUserScope(id);
+        // Normalize paging inputs
+        if (page < 1) page = 1;
+        if (pageSize <= 0) pageSize = 20;
+        const int maxPageSize = 100;
+        if (pageSize > maxPageSize) pageSize = maxPageSize;
+
+        var logsQuery = userLogService
+            .GetByUserId(id)
+            .OrderByDescending(l => l.CreatedAt);
+
+        var total = logsQuery.Count();
+
+        var skip = (page - 1) * pageSize;
+        var items = logsQuery.Skip(skip).Take(pageSize).Select(Mappers.Map).ToList();
+
+        logger.LogInformation("Listing logs for user {UserId}. Page: {Page}, PageSize: {PageSize}, Returned: {Count}", id, page, pageSize, items.Count);
+
+        var result = new PagedResultDto<UserLogDto>(items, page, pageSize, total);
+        return Ok(result);
     }
 
     /// <summary>
@@ -217,6 +254,7 @@ public class UsersController(IUserService userService, ILogger<UsersController> 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult Delete(long id)
     {
+        using var scope = BeginUserScope(id);
         logger.LogInformation("Deleting user id {UserId}", id);
         var deleted = userService.Delete(id);
         if (!deleted)
@@ -228,4 +266,6 @@ public class UsersController(IUserService userService, ILogger<UsersController> 
         return NoContent();
     }
 
+    private IDisposable? BeginUserScope(long userId) =>
+        logger.BeginScope(new Dictionary<string, object?> { ["UserId"] = userId });
 }

@@ -3,6 +3,8 @@
 @inject NavigationManager Nav
 @using UserManagement.Blazor.Components
 @using System.Globalization
+@using System.Linq
+@using UserManagement.Shared.DTOs
 
 <PageTitle>User Details</PageTitle>
 
@@ -18,87 +20,132 @@ else if (!string.IsNullOrEmpty(error))
 }
 else if (user is not null)
 {
-    <div class="card">
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Id</dt>
-                <dd class="col-sm-9" data-testid="user-id">@user.Id</dd>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Id</dt>
+                        <dd class="col-sm-9" data-testid="user-id">@user.Id</dd>
 
-                <dt class="col-sm-3">Forename</dt>
-                <dd class="col-sm-9" data-testid="user-forename">
-                    <EditSwitch IsEditing="isEditing">
-                        <Display>
-                            @user.Forename
-                        </Display>
-                        <Edit>
-                            <InputText id="forename" class="form-control" @bind-Value="editModel.Forename" />
-                        </Edit>
-                    </EditSwitch>
-                </dd>
+                        <dt class="col-sm-3">Forename</dt>
+                        <dd class="col-sm-9" data-testid="user-forename">
+                            <EditSwitch IsEditing="isEditing">
+                                <Display>
+                                    @user.Forename
+                                </Display>
+                                <Edit>
+                                    <InputText id="forename" class="form-control" @bind-Value="editModel.Forename" />
+                                </Edit>
+                            </EditSwitch>
+                        </dd>
 
-                <dt class="col-sm-3">Surname</dt>
-                <dd class="col-sm-9" data-testid="user-surname">
-                    <EditSwitch IsEditing="isEditing">
-                        <Display>
-                            @user.Surname
-                        </Display>
-                        <Edit>
-                            <InputText id="surname" class="form-control" @bind-Value="editModel.Surname" />
-                        </Edit>
-                    </EditSwitch>
-                </dd>
+                        <dt class="col-sm-3">Surname</dt>
+                        <dd class="col-sm-9" data-testid="user-surname">
+                            <EditSwitch IsEditing="isEditing">
+                                <Display>
+                                    @user.Surname
+                                </Display>
+                                <Edit>
+                                    <InputText id="surname" class="form-control" @bind-Value="editModel.Surname" />
+                                </Edit>
+                            </EditSwitch>
+                        </dd>
 
-                <dt class="col-sm-3">Email</dt>
-                <dd class="col-sm-9" data-testid="user-email">
-                    <EditSwitch IsEditing="isEditing">
-                        <Display>
-                            @user.Email
-                        </Display>
-                        <Edit>
-                            <InputText id="email" type="email" class="form-control" @bind-Value="editModel.Email" />
-                        </Edit>
-                    </EditSwitch>
-                </dd>
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9" data-testid="user-email">
+                            <EditSwitch IsEditing="isEditing">
+                                <Display>
+                                    @user.Email
+                                </Display>
+                                <Edit>
+                                    <InputText id="email" type="email" class="form-control" @bind-Value="editModel.Email" />
+                                </Edit>
+                            </EditSwitch>
+                        </dd>
 
-                <dt class="col-sm-3">Date of Birth</dt>
-                <dd class="col-sm-9" data-testid="user-dob">
-                    <EditSwitch IsEditing="isEditing">
-                        <Display>
-                            @user.DateOfBirth.ToString("d", CultureInfo.CurrentCulture)
-                        </Display>
-                        <Edit>
-                            <InputDate id="dob" class="form-control" @bind-Value="editModel.DateOfBirth" />
-                        </Edit>
-                    </EditSwitch>
-                </dd>
+                        <dt class="col-sm-3">Date of Birth</dt>
+                        <dd class="col-sm-9" data-testid="user-dob">
+                            <EditSwitch IsEditing="isEditing">
+                                <Display>
+                                    @user.DateOfBirth.ToString("d", CultureInfo.CurrentCulture)
+                                </Display>
+                                <Edit>
+                                    <InputDate id="dob" class="form-control" @bind-Value="editModel.DateOfBirth" />
+                                </Edit>
+                            </EditSwitch>
+                        </dd>
 
-                <dt class="col-sm-3">Active</dt>
-                <dd class="col-sm-9" data-testid="user-active">
-                    <EditSwitch IsEditing="isEditing">
-                        <Display>
-                            @(user.IsActive ? "Yes" : "No")
-                        </Display>
-                        <Edit>
-                            <div class="form-check mb-0">
-                                <InputCheckbox id="isActive" class="form-check-input" @bind-Value="editModel.IsActive" />
-                                <label class="form-check-label" for="isActive">Active</label>
-                            </div>
-                        </Edit>
-                    </EditSwitch>
-                </dd>
-            </dl>
+                        <dt class="col-sm-3">Active</dt>
+                        <dd class="col-sm-9" data-testid="user-active">
+                            <EditSwitch IsEditing="isEditing">
+                                <Display>
+                                    @(user.IsActive ? "Yes" : "No")
+                                </Display>
+                                <Edit>
+                                    <div class="form-check mb-0">
+                                        <InputCheckbox id="isActive" class="form-check-input" @bind-Value="editModel.IsActive" />
+                                        <label class="form-check-label" for="isActive">Active</label>
+                                    </div>
+                                </Edit>
+                            </EditSwitch>
+                        </dd>
+                    </dl>
 
-            <div class="d-flex gap-2">
-                @if (!isEditing)
-                {
-                    <button class="btn btn-primary" data-testid="edit-user" @onclick="StartEdit">Edit</button>
-                    <a href="/users" class="btn btn-secondary">Back to list</a>
-                }
-                else
-                {
-                    <button class="btn btn-primary" data-testid="save-user" @onclick="SaveEdit">Save</button>
-                    <button type="button" class="btn btn-secondary" data-testid="cancel-edit" @onclick="CancelEdit">Cancel</button>
-                }
+                    <div class="d-flex gap-2">
+                        @if (!isEditing)
+                        {
+                            <button class="btn btn-primary" data-testid="edit-user" @onclick="StartEdit">Edit</button>
+                            <a href="/users" class="btn btn-secondary">Back to list</a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary" data-testid="save-user" @onclick="SaveEdit">Save</button>
+                            <button type="button" class="btn btn-secondary" data-testid="cancel-edit" @onclick="CancelEdit">Cancel</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Activity Logs</h5>
+
+                    @if (logsLoading)
+                    {
+                        <p>Loading logs...</p>
+                    }
+                    else if (logs is null || !logs.Items.Any())
+                    {
+                        <p>No logs found.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group mb-2">
+                            @foreach (var l in logs.Items)
+                            {
+                                <li class="list-group-item">
+                                    <div><strong>@l.CreatedAt.ToString("g")</strong></div>
+                                    <div>@l.Message</div>
+                                </li>
+                            }
+                        </ul>
+
+                        <nav>
+                            <ul class="pagination">
+                                <li class="page-item @(logPage <= 1 ? "disabled" : "")">
+                                    <a class="page-link" href="#" @onclick="@(async e => await ChangeLogPage(logPage - 1))" @onclick:preventDefault="true">Previous</a>
+                                </li>
+                                <li class="page-item disabled"><span class="page-link">Page @logPage</span></li>
+                                <li class="page-item @(logs.HasMore ? "" : "disabled")">
+                                    <a class="page-link" href="#" @onclick="@(async e => await ChangeLogPage(logPage + 1))" @onclick:preventDefault="true">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -124,6 +171,13 @@ else
     private bool isEditing;
     private EditUserModel editModel = new();
 
+    private bool logsLoading;
+    private PagedResultDto<Shared.DTOs.UserLogDto>? logs;
+    private int logPage = 1;
+    private int logPageSize = 5;
+
+    private bool HasMoreLogs => logs is not null && logs.HasMore;
+
     protected override async Task OnParametersSetAsync()
     {
         await LoadAsync();
@@ -138,9 +192,13 @@ else
         loading = true;
         error = null;
         user = null;
+        logs = null;
+        logsLoading = true;
         try
         {
             user = await UsersClient.GetUserAsync(id);
+            // Load first page of logs after user is retrieved
+            await LoadLogsAsync();
         }
         catch (Exception ex)
         {
@@ -149,13 +207,42 @@ else
         finally
         {
             loading = false;
+            logsLoading = false;
         }
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        logsLoading = true;
+        logs = null;
+        try
+        {
+            logs = await UsersClient.GetUserLogsAsync(id, logPage, logPageSize);
+        }
+        catch (Exception)
+        {
+            // ignore log errors for now, show empty
+            logs = new PagedResultDto<Shared.DTOs.UserLogDto>(Array.Empty<Shared.DTOs.UserLogDto>().ToList(), logPage, logPageSize, 0);
+        }
+        finally
+        {
+            logsLoading = false;
+        }
+    }
+
+    private async Task ChangeLogPage(int newPage)
+    {
+        if (newPage < 1) return;
+        // If trying to go forward but there are no more logs, don't change page
+        if (newPage > logPage && !HasMoreLogs) return;
+        logPage = newPage;
+        await LoadLogsAsync();
     }
 
     private void StartEdit()
     {
         if (user is null) return;
-        editModel = new EditUserModel
+        editModel = new()
         {
             Forename = user.Forename ?? string.Empty,
             Surname = user.Surname ?? string.Empty,

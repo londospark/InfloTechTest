@@ -7,7 +7,6 @@ var database = builder.AddSqlServer("SQL-Server")
 
 var api = builder.AddProject<Projects.UserManagement_Web>("API")
     .WithUrlForEndpoint("https", url => url.DisplayText = "Home")
-    .WithUrlForEndpoint("http", url => url.DisplayText = "Home (http)")
     .WithUrl("/scalar", "Scalar API Reference")
     .WithReference(database)
     .WaitFor(database);

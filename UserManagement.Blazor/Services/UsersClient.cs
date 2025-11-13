@@ -49,4 +49,10 @@ public sealed class UsersClient(HttpClient http) : IUsersClient
         var dto = await resp.Content.ReadFromJsonAsync<UserListItemDto>(cancellationToken: cancellationToken);
         return dto!;
     }
+
+    public async Task<PagedResultDto<UserLogDto>> GetUserLogsAsync(long userId, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
+    {
+        var res = await http.GetFromJsonAsync<PagedResultDto<UserLogDto>>($"api/users/{userId}/logs?page={page}&pageSize={pageSize}", cancellationToken);
+        return res ?? new(new List<UserLogDto>(), page, pageSize, 0);
+    }
 }

@@ -11,8 +11,8 @@ public class UserServiceTests
     public void GetAll_WhenContextReturnsEntities_MustReturnSameEntities()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var service = this.CreateService();
-        var users = this.SetupUsers();
+        var service = CreateService();
+        var users = SetupUsers();
 
         // Act: Invokes the method under test with the arranged parameters.
         var result = service.GetAll();
@@ -24,8 +24,8 @@ public class UserServiceTests
     [Fact]
     public void FilterByActive_WhenContextReturnsActiveEntities_MustReturnAllEntities()
     {
-        var service = this.CreateService();
-        var users = this.SetupUsers(isActive: true);
+        var service = CreateService();
+        var users = SetupUsers(isActive: true);
 
         var result = service.FilterByActive(true);
 
@@ -35,8 +35,8 @@ public class UserServiceTests
     [Fact]
     public void FilterByActive_WhenContextReturnsInactiveEntities_MustReturnNoEntities()
     {
-        var service = this.CreateService();
-        _ = this.SetupUsers(isActive: false);
+        var service = CreateService();
+        _ = SetupUsers(isActive: false);
 
         var result = service.FilterByActive(true);
 
@@ -47,8 +47,8 @@ public class UserServiceTests
     public void Delete_WhenUserExists_DeletesAndReturnsTrue()
     {
         // Arrange
-        var service = this.CreateService();
-        var users = this.SetupUsers();
+        var service = CreateService();
+        var users = SetupUsers();
         var existing = users.First();
         existing.Id = 10;
 
@@ -57,22 +57,22 @@ public class UserServiceTests
 
         // Assert
         result.Should().BeTrue();
-        this.dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u == existing)), Times.Once);
+        dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u == existing)), Times.Once);
     }
 
     [Fact]
     public void Delete_WhenUserMissing_ReturnsFalseAndDoesNotDelete()
     {
         // Arrange
-        var service = this.CreateService();
-        _ = this.SetupUsers();
+        var service = CreateService();
+        _ = SetupUsers();
 
         // Act
         var result = service.Delete(999);
 
         // Assert
         result.Should().BeFalse();
-        this.dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
+        dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
     }
 
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
@@ -88,7 +88,7 @@ public class UserServiceTests
             }
         }.AsQueryable();
 
-        this.dataContext
+        dataContext
             .Setup(s => s.GetAll<User>())
             .Returns(users);
 
@@ -96,5 +96,5 @@ public class UserServiceTests
     }
 
     private readonly Mock<IDataContext> dataContext = new();
-    private UserService CreateService() => new(this.dataContext.Object);
+    private UserService CreateService() => new(dataContext.Object);
 }

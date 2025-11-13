@@ -134,3 +134,40 @@ public sealed record CreateUserRequestDto : IValidatableObject
         }
     }
 }
+
+/// <summary>
+/// A DTO representing a user log entry.
+/// </summary>
+public sealed record UserLogDto
+{
+    /// <summary>
+    /// The unique identifier for the log entry.
+    /// </summary>
+    public long Id { get; init; }
+
+    /// <summary>
+    /// The identifier of the user this log entry relates to.
+    /// </summary>
+    public long UserId { get; init; }
+
+    /// <summary>
+    /// The log message or description.
+    /// </summary>
+    public string Message { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The UTC timestamp when the log was created.
+    /// </summary>
+    public DateTime CreatedAt { get; init; }
+
+    /// <summary>
+    /// Creates a new <see cref="UserLogDto"/> instance.
+    /// </summary>
+    public UserLogDto(long id, long userId, string message, DateTime createdAt)
+    {
+        Id = id;
+        UserId = userId;
+        Message = message;
+        CreatedAt = createdAt;
+    }
+}

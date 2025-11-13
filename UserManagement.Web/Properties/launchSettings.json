@@ -6,8 +6,7 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7084",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ProxyTo": "http://localhost:62507"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

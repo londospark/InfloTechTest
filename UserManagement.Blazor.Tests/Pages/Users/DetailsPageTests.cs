@@ -18,7 +18,7 @@ public class DetailsPageTests : BunitContext
 
     private void Register()
     {
-        Services.AddScoped(_ => this.usersClient.Object);
+        Services.AddScoped(_ => usersClient.Object);
     }
 
     [Fact]
@@ -29,8 +29,8 @@ public class DetailsPageTests : BunitContext
         var original = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
         var updatedRequest = default(CreateUserRequestDto);
 
-        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(original);
-        this.usersClient
+        usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(original);
+        usersClient
             .Setup(c => c.UpdateUserAsync(7, It.IsAny<CreateUserRequestDto>(), default))
             .Callback<long, CreateUserRequestDto, System.Threading.CancellationToken>((_, req, _) => updatedRequest = req)
             .ReturnsAsync(new UserListItemDto(7, "Janet", "Smith", "janet@example.com", true, new(1990, 5, 20)));
@@ -54,7 +54,7 @@ public class DetailsPageTests : BunitContext
         cut.Find("[data-testid='save-user']").Click();
 
         // Assert - UpdateUserAsync was called with the edited values
-        this.usersClient.Verify(c => c.UpdateUserAsync(7, It.Is<CreateUserRequestDto>(r =>
+        usersClient.Verify(c => c.UpdateUserAsync(7, It.Is<CreateUserRequestDto>(r =>
             r.Forename == "Janet" &&
             r.Surname == "Smith" &&
             r.Email == "janet@example.com" &&
@@ -76,7 +76,7 @@ public class DetailsPageTests : BunitContext
     {
         // Arrange
         Register();
-        this.usersClient.Setup(c => c.GetUserAsync(It.IsAny<long>(), default)).Returns(async () =>
+        usersClient.Setup(c => c.GetUserAsync(It.IsAny<long>(), default)).Returns(async () =>
         {
             await Task.Delay(10);
             return new(1, "A", "B", "a@b.com", true, new(2000, 1, 1));
@@ -95,7 +95,7 @@ public class DetailsPageTests : BunitContext
         // Arrange
         Register();
         var dto = new UserListItemDto(5, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
-        this.usersClient.Setup(c => c.GetUserAsync(5, default)).ReturnsAsync(dto);
+        usersClient.Setup(c => c.GetUserAsync(5, default)).ReturnsAsync(dto);
 
         // Act
         var cut = Render<Details>(ps => ps.Add(p => p.id, 5));
@@ -116,7 +116,7 @@ public class DetailsPageTests : BunitContext
         // Arrange
         Register();
         var dto = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
-        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(dto);
+        usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(dto);
 
         // Arrange navigation to include the query parameter (?edit=true)
         var nav = Services.GetRequiredService<NavigationManager>();
@@ -145,8 +145,8 @@ public class DetailsPageTests : BunitContext
         // Arrange
         Register();
         var original = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
-        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(original);
-        this.usersClient
+        usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(original);
+        usersClient
             .Setup(c => c.UpdateUserAsync(7, It.IsAny<CreateUserRequestDto>(), default))
             .ReturnsAsync(new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15)));
 
@@ -169,7 +169,7 @@ public class DetailsPageTests : BunitContext
         // Arrange
         Register();
         var dto = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
-        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(dto);
+        usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(dto);
 
         var nav = Services.GetRequiredService<NavigationManager>();
         nav.NavigateTo("/users/7?edit=true&return=/users");
@@ -189,7 +189,7 @@ public class DetailsPageTests : BunitContext
     {
         // Arrange
         Register();
-        this.usersClient.Setup(c => c.GetUserAsync(9, default)).ThrowsAsync(new InvalidOperationException("Boom"));
+        usersClient.Setup(c => c.GetUserAsync(9, default)).ThrowsAsync(new InvalidOperationException("Boom"));
 
         // Act
         var cut = Render<Details>(ps => ps.Add(p => p.id, 9));

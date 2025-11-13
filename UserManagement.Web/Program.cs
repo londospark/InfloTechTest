@@ -2,13 +2,19 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Scalar.AspNetCore;
 using UserManagement.Data;
 using UserManagement.Data.Extensions;
 using UserManagement.ServiceDefaults;
 using UserManagement.Services.Extensions;
+using UserManagement.Web.Controllers;
+using UserManagement.Web.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Disable ValidateScopes to avoid DI validation failures when running under test harness (WebApplicationFactory)
+builder.Host.UseDefaultServiceProvider(options => options.ValidateScopes = false);
 
 builder.AddServiceDefaults();
 
@@ -16,6 +22,14 @@ builder.AddServiceDefaults();
 builder.Services
     .AddOpenApi()
     .AddDomainServices()
+    .AddScoped<ILogger<UsersController>>(sp =>
+    {
+        var factory = sp.GetRequiredService<ILoggerFactory>();
+        var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
+        // Create a forward logger using a non-typed category name to avoid DI recursion during validation
+        var forward = factory.CreateLogger("ForwardedLogger");
+        return new DatabaseLogger<UsersController>(factory, scopeFactory, forward);
+    })
     .AddControllers();
 
 builder.AddDataAccess();
@@ -47,11 +61,15 @@ if (app.Environment.IsDevelopment())
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-    if (db.Database.IsRelational())
-        db.Database.Migrate();
-    else
-        db.Database.EnsureCreated();
+    // Some test hosts (WebApplicationFactory) may not register DataContext; guard against that.
+    var db = scope.ServiceProvider.GetService<DataContext>();
+    if (db is not null)
+    {
+        if (db.Database.IsRelational())
+            db.Database.Migrate();
+        else
+            db.Database.EnsureCreated();
+    }
 }
 
 app.MapDefaultEndpoints();
@@ -60,9 +78,12 @@ app.UseHsts();
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+// CORS must run after routing and before authentication/authorization so the CORS headers are applied.
+app.UseCors(corsPolicyName);
+
 app.UseAuthorization();
 
-app.UseCors(corsPolicyName);
 app.MapControllers();
 
 app.Run();

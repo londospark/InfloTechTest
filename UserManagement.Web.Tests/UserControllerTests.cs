@@ -17,8 +17,8 @@ public class UserControllerTests
     public void List_WhenServiceReturnsUsers_ModelMustContainUsers()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var controller = this.CreateController();
-        var users = this.SetupUsers();
+        var controller = CreateController();
+        var users = SetupUsers();
 
         // Act: Invokes the method under test with the arranged parameters.
         var result = controller.List();
@@ -33,8 +33,8 @@ public class UserControllerTests
     [Fact]
     public void ListByActive_WhenFilteringActiveUsers_ModelMustContainOnlyActiveUsers()
     {
-        var controller = this.CreateController();
-        var users = this.SetupUsers(isActive: true);
+        var controller = CreateController();
+        var users = SetupUsers(isActive: true);
 
         var result = controller.ListByActive(isActive: true);
 
@@ -47,8 +47,8 @@ public class UserControllerTests
     [Fact]
     public void ListByActive_WhenFilteringInactiveUsers_ModelMustContainOnlyInactiveUsers()
     {
-        var controller = this.CreateController();
-        var users = this.SetupUsers(isActive: false);
+        var controller = CreateController();
+        var users = SetupUsers(isActive: false);
 
         var result = controller.ListByActive(isActive: false);
 
@@ -63,7 +63,7 @@ public class UserControllerTests
     {
         // Arrange
         var logger = new Mock<ILogger<UsersController>>();
-        var controller = this.CreateController(logger.Object);
+        var controller = CreateController(logger.Object);
         var req = new CreateUserRequestDto(
             "Jane",
             "Doe",
@@ -73,7 +73,7 @@ public class UserControllerTests
         );
 
         // Simulate DB assigning id
-        this.dataContext
+        dataContext
             .Setup(dc => dc.Create(It.IsAny<User>()))
             .Callback<User>(u => u.Id = 123);
 
@@ -94,7 +94,7 @@ public class UserControllerTests
         dto.DateOfBirth.Should().Be(new(1992, 5, 10));
 
         // Verify the data context was called with expected user
-        this.dataContext.Verify(dc => dc.Create(It.Is<User>(u =>
+        dataContext.Verify(dc => dc.Create(It.Is<User>(u =>
             u.Forename == req.Forename &&
             u.Surname == req.Surname &&
             u.Email == req.Email &&
@@ -111,7 +111,7 @@ public class UserControllerTests
     {
         // Arrange: invalid Forename (empty). Provide other valid fields
         var logger = new Mock<ILogger<UsersController>>();
-        var controller = this.CreateController(logger.Object);
+        var controller = CreateController(logger.Object);
         var req = new CreateUserRequestDto(
             "", // invalid
             "Doe",
@@ -129,7 +129,7 @@ public class UserControllerTests
         objectResult.StatusCode.Should().Be(400);
 
         // And no persistence should occur
-        this.dataContext.Verify(dc => dc.Create(It.IsAny<User>()), Times.Never);
+        dataContext.Verify(dc => dc.Create(It.IsAny<User>()), Times.Never);
 
         // And a warning was logged
         VerifyLogContains(logger, LogLevel.Warning, "Create user validation failed");
@@ -139,7 +139,7 @@ public class UserControllerTests
     public void Create_WhenDateOfBirthInFuture_ReturnsBadRequest()
     {
         // Arrange: use a future DOB to hit shared IValidatableObject rule
-        var controller = this.CreateController();
+        var controller = CreateController();
         var future = DateTime.Now.AddDays(1);
         var req = new CreateUserRequestDto(
             "Jane",
@@ -159,14 +159,14 @@ public class UserControllerTests
             .Which.Errors.Should().ContainKey(nameof(CreateUserRequestDto.DateOfBirth));
 
         // No persistence
-        this.dataContext.Verify(dc => dc.Create(It.IsAny<User>()), Times.Never);
+        dataContext.Verify(dc => dc.Create(It.IsAny<User>()), Times.Never);
     }
 
     [Fact]
     public void GetById_WhenFound_Returns200WithUser()
     {
-        var controller = this.CreateController();
-        var users = this.SetupUsers();
+        var controller = CreateController();
+        var users = SetupUsers();
         users.First().Id = 42;
 
         var result = controller.GetById(42);
@@ -181,8 +181,8 @@ public class UserControllerTests
     public void GetById_WhenMissing_Returns404()
     {
         var logger = new Mock<ILogger<UsersController>>();
-        var controller = this.CreateController(logger.Object);
-        _ = this.SetupUsers();
+        var controller = CreateController(logger.Object);
+        _ = SetupUsers();
 
         var result = controller.GetById(999);
 
@@ -197,8 +197,8 @@ public class UserControllerTests
     {
         // Arrange
         var logger = new Mock<ILogger<UsersController>>();
-        var controller = this.CreateController(logger.Object);
-        var users = this.SetupUsers();
+        var controller = CreateController(logger.Object);
+        var users = SetupUsers();
         users.First().Id = 5;
 
         // Act
@@ -206,7 +206,7 @@ public class UserControllerTests
 
         // Assert
         result.Should().BeOfType<NoContentResult>().Which.StatusCode.Should().Be(204);
-        this.dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u.Id == 5)), Times.Once);
+        dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u.Id == 5)), Times.Once);
 
         // Information logs for delete flow
         VerifyLogContains(logger, LogLevel.Information, "Deleting user id");
@@ -217,15 +217,15 @@ public class UserControllerTests
     public void Delete_WhenMissing_ReturnsNotFound()
     {
         // Arrange
-        var controller = this.CreateController();
-        _ = this.SetupUsers();
+        var controller = CreateController();
+        _ = SetupUsers();
 
         // Act
         var result = controller.Delete(999);
 
         // Assert
         result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
-        this.dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
+        dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
     }
 
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
@@ -243,7 +243,7 @@ public class UserControllerTests
             }
         }.AsQueryable();
 
-        this.dataContext
+        dataContext
             .Setup(s => s.GetAll<User>())
             .Returns(users);
 
@@ -252,7 +252,53 @@ public class UserControllerTests
 
     private readonly Mock<IDataContext> dataContext = new();
     private UsersController CreateController(ILogger<UsersController>? logger = null)
-        => new(new UserService(this.dataContext.Object), logger ?? new NullLogger<UsersController>());
+        => new(
+            new UserService(dataContext.Object),
+            new UserLogService(dataContext.Object),
+            logger ?? new NullLogger<UsersController>());
+
+    [Fact]
+    public void GetLogs_WhenLogsExistForUser_ReturnsPagedDescending()
+    {
+        // Arrange
+        var controller = CreateController();
+        var now = DateTime.UtcNow;
+        var logs = new[]
+        {
+            new UserLog { Id = 1, UserId = 77, Message = "A", CreatedAt = now.AddMinutes(-1) },
+            new UserLog { Id = 2, UserId = 77, Message = "B", CreatedAt = now.AddMinutes(-2) },
+            new UserLog { Id = 3, UserId = 77, Message = "C", CreatedAt = now.AddMinutes(-3) },
+            new UserLog { Id = 4, UserId = 99, Message = "Other user", CreatedAt = now.AddMinutes(-4) },
+        }.AsQueryable();
+
+        dataContext
+            .Setup(s => s.GetAll<UserLog>())
+            .Returns(logs);
+
+        // Act: request page 1, pageSize 2 for user 77
+        var action = controller.GetLogs(77, page: 1, pageSize: 2);
+
+        // Assert
+        var ok = action.Result.Should().BeOfType<OkObjectResult>().Subject;
+        ok.StatusCode.Should().Be(200);
+        var paged = ok.Value.As<PagedResultDto<UserLogDto>>();
+        paged.Page.Should().Be(1);
+        paged.PageSize.Should().Be(2);
+        paged.TotalCount.Should().Be(3); // only three logs for user 77
+        paged.Items.Count.Should().Be(2);
+        paged.Items[0].Message.Should().Be("A"); // newest first
+        paged.Items[1].Message.Should().Be("B");
+
+        // Act: page 2
+        var actionPage2 = controller.GetLogs(77, page: 2, pageSize: 2);
+        var ok2 = actionPage2.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var paged2 = ok2.Value.As<PagedResultDto<UserLogDto>>();
+        paged2.Page.Should().Be(2);
+        paged2.PageSize.Should().Be(2);
+        paged2.TotalCount.Should().Be(3);
+        paged2.Items.Count.Should().Be(1);
+        paged2.Items[0].Message.Should().Be("C");
+    }
 
     private static void VerifyLogContains(Mock<ILogger<UsersController>> logger, LogLevel level, string contains)
     {
