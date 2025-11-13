@@ -9,6 +9,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      # Disable EF HasData seeding during CI so tests run against a clean DB
+      DISABLE_SEEDING: 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

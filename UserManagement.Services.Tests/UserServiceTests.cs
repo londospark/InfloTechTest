@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
-using FluentAssertions;
-using Xunit;
 using Microsoft.Data.Sqlite;
 
 namespace UserManagement.Services.Tests;
@@ -45,8 +43,7 @@ public class UserServiceTests
 
         var result = service.FilterByActive(true);
 
-        // Ensure we only see users we added (no seeded users)
-        result.Where(u => u.Email == "juser@example.com").Should().BeEmpty();
+        result.Should().BeEmpty();
     }
 
     [Fact]
@@ -103,6 +100,11 @@ public class UserServiceTests
             .Options;
         var ctx = new DataContext(opts);
         ctx.Database.EnsureCreated();
+
+        // Clear seeded data to provide isolated test state
+        ctx.Users?.RemoveRange(ctx.Users);
+        ctx.UserLogs?.RemoveRange(ctx.UserLogs);
+        ctx.SaveChanges();
 
         return ctx;
     }
