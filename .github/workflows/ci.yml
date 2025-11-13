@@ -90,4 +90,5 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
+          files: ./TestResults/test_results.trx
           token: ${{ secrets.CODECOV_TOKEN }}
