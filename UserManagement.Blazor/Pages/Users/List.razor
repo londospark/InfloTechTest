@@ -71,6 +71,10 @@ else if (users?.Items?.Count > 0)
                             <i class="bi bi-eye" aria-hidden="true"></i>
                             <span class="visually-hidden">View</span>
                         </a>
+                        <a class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1" href="@($"/users/{u.Id}?edit=true")" data-testid="@($"edit-{u.Id}")" aria-label="Edit" title="Edit">
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                            <span class="visually-hidden">Edit</span>
+                        </a>
                         <button class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1" data-testid="@($"delete-{u.Id}")" @onclick="() => OnDeleteClicked(u.Id)" aria-label="Delete" title="Delete">
                             <i class="bi bi-trash" aria-hidden="true"></i>
                             <span class="visually-hidden">Delete</span>

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Bunit;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using UserManagement.Blazor.Pages.Users;
@@ -109,6 +110,35 @@ public class DetailsPageTests : BunitContext
         cut.Find("[data-testid='user-active']").TextContent.Should().Be("No");
     }
 
+    [Fact]
+    public async Task QueryParam_edit_true_StartsInEditMode()
+    {
+        // Arrange
+        Register();
+        var dto = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
+        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(dto);
+
+        // Arrange navigation to include the query parameter (?edit=true)
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/users/7?edit=true");
+
+        // Act: render component (query string will bind to [SupplyParameterFromQuery] edit)
+        var cut = Render<Details>(ps => ps.Add(p => p.id, 7));
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Assert: Should be in edit mode (Save/Cancel visible, Edit button hidden)
+        cut.Find("[data-testid='save-user']");
+        cut.Find("[data-testid='cancel-edit']");
+        cut.Markup.Should().NotContain("data-testid=\"edit-user\"");
+
+        // And input fields should be rendered
+        cut.Find("#forename");
+        cut.Find("#surname");
+        cut.Find("#email");
+        cut.Find("#dob");
+        cut.Find("#isActive");
+    }
+    
     [Fact]
     public async Task ShowsError_OnFailure()
     {

@@ -69,6 +69,30 @@ public class ListPageTests : BunitContext
     }
 
     [Fact]
+    public async Task RendersEditLink_ForEachUser_NavigatesToEditMode()
+    {
+        // Arrange
+        RegisterServices();
+        var users = new UserListDto([
+            new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 2, 1))
+        ]);
+        this.usersClient
+            .Setup(c => c.GetUsersAsync(default))
+            .ReturnsAsync(users);
+
+        // Act
+        var cut = Render<List>();
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Assert: Edit link exists with expected href and data-testid
+        var edit = cut.Find("a[data-testid='edit-1']");
+        edit.GetAttribute("href").Should().Be("/users/1?edit=true");
+        edit.ClassList.Should().Contain(new[] { "btn", "btn-warning" });
+        edit.GetAttribute("aria-label").Should().Be("Edit");
+        edit.GetAttribute("title").Should().Be("Edit");
+    }
+
+    [Fact]
     public async Task ShowsEmptyMessage_WhenNoUsers()
     {
         // Arrange
