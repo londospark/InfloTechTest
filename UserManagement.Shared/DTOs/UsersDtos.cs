@@ -2,25 +2,112 @@
 
 namespace UserManagement.Shared.DTOs;
 
-public sealed record UserListDto(IReadOnlyList<UserListItemDto> Items);
+/// <summary>
+/// A paged-style container for user items returned by the Users API.
+/// </summary>
+public sealed record UserListDto
+{
+    /// <summary>
+    /// The collection of users returned by the request.
+    /// </summary>
+    public IReadOnlyList<UserListItemDto> Items { get; init; }
 
-public sealed record UserListItemDto(
-    long Id,
-    string? Forename,
-    string? Surname,
-    string? Email,
-    bool IsActive,
-    DateTime DateOfBirth
-);
+    /// <summary>
+    /// Creates a new <see cref="UserListDto"/> with the specified items.
+    /// </summary>
+    /// <param name="items">The user items to include in the response.</param>
+    public UserListDto(IReadOnlyList<UserListItemDto> items) => Items = items;
+}
 
+/// <summary>
+/// A lightweight view of a user returned from list and read endpoints.
+/// </summary>
+public sealed record UserListItemDto
+{
+    /// <summary>
+    /// The unique identifier of the user.
+    /// </summary>
+    public long Id { get; init; }
+
+    /// <summary>
+    /// The user's given name.
+    /// </summary>
+    public string? Forename { get; init; }
+
+    /// <summary>
+    /// The user's family name.
+    /// </summary>
+    public string? Surname { get; init; }
+
+    /// <summary>
+    /// The user's email address.
+    /// </summary>
+    public string? Email { get; init; }
+
+    /// <summary>
+    /// Indicates whether the user is currently active.
+    /// </summary>
+    public bool IsActive { get; init; }
+
+    /// <summary>
+    /// The user's date of birth.
+    /// </summary>
+    public DateTime DateOfBirth { get; init; }
+
+    /// <summary>
+    /// Creates a new <see cref="UserListItemDto"/> instance.
+    /// </summary>
+    public UserListItemDto(long id, string? forename, string? surname, string? email, bool isActive, DateTime dateOfBirth)
+    {
+        Id = id;
+        Forename = forename;
+        Surname = surname;
+        Email = email;
+        IsActive = isActive;
+        DateOfBirth = dateOfBirth;
+    }
+}
+
+/// <summary>
+/// The payload used to create a user via the API.
+/// </summary>
+/// <remarks>
+/// All properties are validated. Invalid requests will return a 400 response with validation details.
+/// </remarks>
 public sealed record CreateUserRequestDto : IValidatableObject
 {
-    [Required, StringLength(100)] public string Forename { get; set; } = string.Empty;
-    [Required, StringLength(100)] public string Surname { get; set; } = string.Empty;
-    [Required, EmailAddress, StringLength(255)] public string Email { get; set; } = string.Empty;
-    [Required] public DateTime DateOfBirth { get; set; }
+    /// <summary>
+    /// The user's given name.
+    /// </summary>
+    [Required, StringLength(100)]
+    public string Forename { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The user's family name.
+    /// </summary>
+    [Required, StringLength(100)]
+    public string Surname { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The user's email address.
+    /// </summary>
+    [Required, EmailAddress, StringLength(255)]
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The user's date of birth.
+    /// </summary>
+    [Required]
+    public DateTime DateOfBirth { get; set; }
+
+    /// <summary>
+    /// Whether the user should be created as active.
+    /// </summary>
     public bool IsActive { get; set; }
 
+    /// <summary>
+    /// Creates a new <see cref="CreateUserRequestDto"/>.
+    /// </summary>
     public CreateUserRequestDto(string forename, string surname, string email, DateTime dateOfBirth, bool isActive)
     {
         Forename = forename;
@@ -30,9 +117,12 @@ public sealed record CreateUserRequestDto : IValidatableObject
         IsActive = isActive;
     }
 
-    // Parameterless ctor for Blazor binding
+    /// <summary>
+    /// Parameterless constructor for model binding.
+    /// </summary>
     public CreateUserRequestDto() { }
 
+    /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (DateOfBirth > DateTime.Now)
