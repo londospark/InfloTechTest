@@ -11,6 +11,9 @@ coverage:
 ignore:
   - "**/Migrations/**"
   - "**/migrations/**"
+  - "UserManagement.ServiceDefaults/*"
+  - "UserManagement.ServiceDefaults/**"
+  - "**/UserManagement.ServiceDefaults/*"
   - "**/UserManagement.ServiceDefaults/**"
   - "**/UserManagement.Data/**/Extensions/**"
   - "**/userManagement.data/**/extensions/**"
