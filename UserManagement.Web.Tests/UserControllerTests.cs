@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,7 +11,6 @@ using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
 using UserManagement.Shared.DTOs;
 using UserManagement.Web.Controllers;
-using Microsoft.Data.Sqlite;
 
 namespace UserManagement.Web.Tests;
 
@@ -391,7 +391,7 @@ public class UserControllerTests
             {
                 _parent.Add(logLevel, formatter(state, exception));
             }
-            private sealed class NullScope : IDisposable { public static readonly NullScope Instance = new(); public void Dispose() {} }
+            private sealed class NullScope : IDisposable { public static readonly NullScope Instance = new(); public void Dispose() { } }
         }
     }
 }

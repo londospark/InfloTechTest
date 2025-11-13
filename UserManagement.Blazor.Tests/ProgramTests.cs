@@ -1,7 +1,6 @@
-using Xunit;
 using Bunit;
 using FluentAssertions;
-using UserManagement.Blazor;
+using Xunit;
 
 namespace UserManagement.Blazor.Tests
 {

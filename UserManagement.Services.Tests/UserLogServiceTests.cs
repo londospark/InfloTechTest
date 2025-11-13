@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
-using Microsoft.Data.Sqlite;
 
 namespace UserManagement.Services.Tests;
 

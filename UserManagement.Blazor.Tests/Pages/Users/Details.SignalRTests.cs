@@ -1,12 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using Bunit;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using UserManagement.Blazor.Pages.Users;
 using UserManagement.Blazor.Services;
 using UserManagement.Shared.DTOs;
-using FluentAssertions;
 using Xunit;
-using UserManagement.Blazor.Pages.Users;
 
 namespace UserManagement.Blazor.Tests.Pages.Users;
 

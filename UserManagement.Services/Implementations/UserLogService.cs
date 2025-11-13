@@ -1,9 +1,9 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace UserManagement.Services.Implementations;
 

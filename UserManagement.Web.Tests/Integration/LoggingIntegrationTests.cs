@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
+using UserManagement.Services.Implementations;
+using UserManagement.Services.Interfaces;
 using UserManagement.Web.Controllers;
 using UserManagement.Web.Helpers;
-using UserManagement.Services.Interfaces;
-using UserManagement.Services.Implementations;
 
 namespace UserManagement.Web.Tests.Integration;
 

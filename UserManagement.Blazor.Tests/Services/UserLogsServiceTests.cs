@@ -2,11 +2,11 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.AspNetCore.SignalR.Client;
+using Moq;
 using UserManagement.Blazor.Services;
 using UserManagement.Shared.DTOs;
 using Xunit;
-using Microsoft.AspNetCore.SignalR.Client;
-using Moq;
 
 namespace UserManagement.Blazor.Tests.Services;
 

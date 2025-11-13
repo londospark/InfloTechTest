@@ -20,7 +20,7 @@ public class ActivityLogsTests : BunitContext
         // Arrange
         var fakeClient = new FakeUsersClient();
         var fakeLogsService = new FakeUserLogsService();
-        
+
         Services.AddScoped<IUsersClient>(_ => fakeClient);
         Services.AddScoped<IUserLogsService>(_ => fakeLogsService);
 
@@ -42,7 +42,7 @@ public class ActivityLogsTests : BunitContext
         // Arrange
         var fakeClient = new FakeUsersClient();
         var fakeLogsService = new FakeUserLogsService();
-        
+
         Services.AddScoped<IUsersClient>(_ => fakeClient);
         Services.AddScoped<IUserLogsService>(_ => fakeLogsService);
 
@@ -66,7 +66,7 @@ public class ActivityLogsTests : BunitContext
         // Arrange
         var fakeClient = new FakeUsersClientEmpty();
         var fakeLogsService = new FakeUserLogsService();
-        
+
         Services.AddScoped<IUsersClient>(_ => fakeClient);
         Services.AddScoped<IUserLogsService>(_ => fakeLogsService);
 

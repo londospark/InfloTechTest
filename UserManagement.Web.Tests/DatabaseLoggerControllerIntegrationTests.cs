@@ -1,13 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
 using UserManagement.Web.Controllers;
 using UserManagement.Web.Helpers;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 
 namespace UserManagement.Web.Tests;
 
@@ -83,7 +83,7 @@ public class DatabaseLoggerControllerIntegrationTests
 
         var controller = new UsersController(new UserService(ctx), userLogService.Object, dbLogger);
 
-        var req = new Shared.DTOs.CreateUserRequestDto("X", "Y", "x@y.com", new DateTime(1990,1,1), true);
+        var req = new Shared.DTOs.CreateUserRequestDto("X", "Y", "x@y.com", new DateTime(1990, 1, 1), true);
 
         var action = await controller.Create(req);
 

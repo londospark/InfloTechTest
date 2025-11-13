@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
 using UserManagement.Web.Helpers;
@@ -50,7 +50,7 @@ public class DatabaseLoggerSignalRTests
 
         var innerLogger = new Mock<ILogger>();
         innerLogger.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
-        
+
         var loggerFactory = new Mock<ILoggerFactory>();
         loggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns(innerLogger.Object);
 

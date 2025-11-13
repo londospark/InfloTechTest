@@ -220,7 +220,8 @@ public class UsersController(IUserService userService, IUserLogService userLogSe
         var created = await userService.AddAsync(user);
         logger.LogInformation($"Created user id {created.Id} with email {created.Email}");
         // Persist a user log for audit trail
-        await userLogService.AddAsync(new UserLog {
+        await userLogService.AddAsync(new UserLog
+        {
             UserId = created.Id,
             Message = $"Created user id {created.Id}: {created.Forename} {created.Surname} ({created.Email})",
             CreatedAt = DateTime.UtcNow

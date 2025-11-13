@@ -1,6 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,7 @@ builder.Services.AddCors(o =>
     o.AddPolicy(corsPolicyName, p =>
     {
         var frontendOrigin = builder.Configuration["FrontendOrigin"];
-        
+
         if (!string.IsNullOrEmpty(frontendOrigin))
         {
             // Production or Aspire: use specific origin with credentials for SignalR
@@ -89,12 +90,16 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-using (var scope = app.Services.CreateScope())
+// Only attempt to resolve and migrate the database if a connection string is configured.
+var configuredConnString = app.Configuration.GetConnectionString("UserManagement")
+    ?? app.Configuration["Aspire:Microsoft:EntityFrameworkCore:SqlServer:ConnectionString"]
+    ?? app.Configuration["Aspire:Microsoft:EntityFrameworkCore:SqlServer:DataContext:ConnectionString"];
+
+if (!string.IsNullOrWhiteSpace(configuredConnString))
 {
-    // Some test hosts (WebApplicationFactory) may not register DataContext; guard against that.
-    var db = scope.ServiceProvider.GetService<DataContext>();
-    if (db is not null)
+    using (var scope = app.Services.CreateScope())
     {
+        var db = scope.ServiceProvider.GetRequiredService<DataContext>();
         if (db.Database.IsRelational())
             db.Database.Migrate();
         else

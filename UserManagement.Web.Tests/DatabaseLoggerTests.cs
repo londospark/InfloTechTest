@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
 using UserManagement.Web.Controllers;
 using UserManagement.Web.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace UserManagement.Web.Tests;
 

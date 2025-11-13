@@ -16,7 +16,7 @@ public class UsersClientCreateUpdateTests
     public async Task CreateUserAsync_ReturnsParsedDto()
     {
         // Arrange
-        var expected = new UserListItemDto(99, "F", "L", "f@l.com", true, new System.DateTime(1990,1,1));
+        var expected = new UserListItemDto(99, "F", "L", "f@l.com", true, new System.DateTime(1990, 1, 1));
         var handler = new StubHandler(_ =>
         {
             var resp = new HttpResponseMessage(HttpStatusCode.Created)
@@ -54,7 +54,7 @@ public class UsersClientCreateUpdateTests
     public async Task UpdateUserAsync_ReturnsParsedDto()
     {
         // Arrange
-        var expected = new UserListItemDto(7, "U", "P", "u@p.com", false, new System.DateTime(2000,1,1));
+        var expected = new UserListItemDto(7, "U", "P", "u@p.com", false, new System.DateTime(2000, 1, 1));
         var handler = new StubHandler(_ =>
         {
             var resp = new HttpResponseMessage(HttpStatusCode.OK)
