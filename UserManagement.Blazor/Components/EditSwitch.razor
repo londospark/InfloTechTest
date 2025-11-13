@@ -1,0 +1,19 @@
+﻿@if (!IsEditing)
+{
+    @Display
+}
+else
+{
+    @Edit
+}
+
+@code {
+    [Parameter]
+    public bool IsEditing { get; set; }
+
+    [Parameter]
+    public RenderFragment? Display { get; set; }
+
+    [Parameter]
+    public RenderFragment? Edit { get; set; }
+}
