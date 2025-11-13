@@ -86,12 +86,8 @@ jobs:
           # Optional: set CODECOV_TOKEN in repository secrets if uploading from private repos
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Publish test results to Checks (test-reporter)
-        if: always()
-        uses: dorny/test-reporter@v1
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
-          name: Unit tests
-          path: ./TestResults/**/*.trx
-          reporter: vstest
-          upload: true
-          fail-on-error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
