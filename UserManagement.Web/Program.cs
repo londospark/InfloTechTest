@@ -1,12 +1,10 @@
 using System;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Scalar.AspNetCore;
-using UserManagement.Data;
 using UserManagement.Data.Extensions;
 using UserManagement.ServiceDefaults;
 using UserManagement.Services.Extensions;
@@ -90,22 +88,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Only attempt to resolve and migrate the database if a connection string is configured.
-var configuredConnString = app.Configuration.GetConnectionString("UserManagement")
-    ?? app.Configuration["Aspire:Microsoft:EntityFrameworkCore:SqlServer:ConnectionString"]
-    ?? app.Configuration["Aspire:Microsoft:EntityFrameworkCore:SqlServer:DataContext:ConnectionString"];
-
-if (!string.IsNullOrWhiteSpace(configuredConnString))
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-        if (db.Database.IsRelational())
-            db.Database.Migrate();
-        else
-            db.Database.EnsureCreated();
-    }
-}
+// NOTE: Database migrations are handled by UserManagement.Migrations project in Aspire AppHost.
+// The migration tool runs before the API starts, ensuring the database is always up to date.
+// Tests manage their own database schema independently.
 
 app.MapDefaultEndpoints();
 

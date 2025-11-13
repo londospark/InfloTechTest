@@ -17,6 +17,7 @@
     <ItemGroup>
       <ProjectReference Include="..\UserManagement.Blazor\UserManagement.Blazor.csproj" />
       <ProjectReference Include="..\UserManagement.Web\UserManagement.Web.csproj" />
+      <ProjectReference Include="..\UserManagement.Migrations\UserManagement.Migrations.csproj" />
     </ItemGroup>
 
 </Project>
