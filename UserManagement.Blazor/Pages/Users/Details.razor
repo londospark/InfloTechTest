@@ -1,6 +1,8 @@
 ﻿@page "/users/{id:long}"
 @inject Services.IUsersClient UsersClient
 @inject NavigationManager Nav
+@using UserManagement.Blazor.Components
+@using System.Globalization
 
 <PageTitle>User Details</PageTitle>
 
@@ -23,24 +25,83 @@ else if (user is not null)
                 <dd class="col-sm-9" data-testid="user-id">@user.Id</dd>
 
                 <dt class="col-sm-3">Forename</dt>
-                <dd class="col-sm-9" data-testid="user-forename">@user.Forename</dd>
+                <dd class="col-sm-9" data-testid="user-forename">
+                    <EditSwitch IsEditing="isEditing">
+                        <Display>
+                            @user.Forename
+                        </Display>
+                        <Edit>
+                            <InputText id="forename" class="form-control" @bind-Value="editModel.Forename" />
+                        </Edit>
+                    </EditSwitch>
+                </dd>
 
                 <dt class="col-sm-3">Surname</dt>
-                <dd class="col-sm-9" data-testid="user-surname">@user.Surname</dd>
+                <dd class="col-sm-9" data-testid="user-surname">
+                    <EditSwitch IsEditing="isEditing">
+                        <Display>
+                            @user.Surname
+                        </Display>
+                        <Edit>
+                            <InputText id="surname" class="form-control" @bind-Value="editModel.Surname" />
+                        </Edit>
+                    </EditSwitch>
+                </dd>
 
                 <dt class="col-sm-3">Email</dt>
-                <dd class="col-sm-9" data-testid="user-email">@user.Email</dd>
+                <dd class="col-sm-9" data-testid="user-email">
+                    <EditSwitch IsEditing="isEditing">
+                        <Display>
+                            @user.Email
+                        </Display>
+                        <Edit>
+                            <InputText id="email" type="email" class="form-control" @bind-Value="editModel.Email" />
+                        </Edit>
+                    </EditSwitch>
+                </dd>
 
                 <dt class="col-sm-3">Date of Birth</dt>
-                <dd class="col-sm-9" data-testid="user-dob">@user.DateOfBirth.ToString("d", System.Globalization.CultureInfo.CurrentCulture)</dd>
+                <dd class="col-sm-9" data-testid="user-dob">
+                    <EditSwitch IsEditing="isEditing">
+                        <Display>
+                            @user.DateOfBirth.ToString("d", CultureInfo.CurrentCulture)
+                        </Display>
+                        <Edit>
+                            <InputDate id="dob" class="form-control" @bind-Value="editModel.DateOfBirth" />
+                        </Edit>
+                    </EditSwitch>
+                </dd>
 
                 <dt class="col-sm-3">Active</dt>
-                <dd class="col-sm-9" data-testid="user-active">@(user.IsActive ? "Yes" : "No")</dd>
+                <dd class="col-sm-9" data-testid="user-active">
+                    <EditSwitch IsEditing="isEditing">
+                        <Display>
+                            @(user.IsActive ? "Yes" : "No")
+                        </Display>
+                        <Edit>
+                            <div class="form-check mb-0">
+                                <InputCheckbox id="isActive" class="form-check-input" @bind-Value="editModel.IsActive" />
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </Edit>
+                    </EditSwitch>
+                </dd>
             </dl>
+
+            <div class="d-flex gap-2">
+                @if (!isEditing)
+                {
+                    <button class="btn btn-primary" data-testid="edit-user" @onclick="StartEdit">Edit</button>
+                    <a href="/users" class="btn btn-secondary">Back to list</a>
+                }
+                else
+                {
+                    <button class="btn btn-primary" data-testid="save-user" @onclick="SaveEdit">Save</button>
+                    <button type="button" class="btn btn-secondary" data-testid="cancel-edit" @onclick="CancelEdit">Cancel</button>
+                }
+            </div>
         </div>
     </div>
-
-    <a href="/users" class="btn btn-secondary mt-3">Back to list</a>
 }
 else
 {
@@ -54,6 +115,8 @@ else
     private bool loading = true;
     private string? error;
     private Shared.DTOs.UserListItemDto? user;
+    private bool isEditing;
+    private EditUserModel editModel = new();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -77,5 +140,60 @@ else
         {
             loading = false;
         }
+    }
+
+    private void StartEdit()
+    {
+        if (user is null) return;
+        editModel = new EditUserModel
+        {
+            Forename = user.Forename ?? string.Empty,
+            Surname = user.Surname ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            DateOfBirth = user.DateOfBirth,
+            IsActive = user.IsActive
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (user is not null)
+        {
+            var request = new Shared.DTOs.CreateUserRequestDto
+            {
+                Forename = editModel.Forename,
+                Surname = editModel.Surname,
+                Email = editModel.Email,
+                DateOfBirth = editModel.DateOfBirth,
+                IsActive = editModel.IsActive
+            };
+
+            try
+            {
+                var updated = await UsersClient.UpdateUserAsync(user.Id, request);
+                user = updated;
+            }
+            catch
+            {
+                // If the update fails, keep editing mode so the user can retry or cancel
+                return;
+            }
+        }
+        isEditing = false;
+    }
+
+    private sealed class EditUserModel
+    {
+        public string Forename { get; set; } = string.Empty;
+        public string Surname { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public DateTime DateOfBirth { get; set; } = DateTime.Today;
+        public bool IsActive { get; set; }
     }
 }

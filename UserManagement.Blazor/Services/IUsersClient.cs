@@ -11,4 +11,6 @@ public interface IUsersClient
     Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, CancellationToken cancellationToken = default);
 
     Task DeleteUserAsync(long id, CancellationToken cancellationToken = default);
+
+    Task<UserListItemDto> UpdateUserAsync(long id, CreateUserRequestDto request, CancellationToken cancellationToken = default);
 }

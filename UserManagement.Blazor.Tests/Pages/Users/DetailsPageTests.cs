@@ -21,6 +21,56 @@ public class DetailsPageTests : BunitContext
     }
 
     [Fact]
+    public async Task Save_CallsUpdateAndUpdatesUi()
+    {
+        // Arrange
+        Register();
+        var original = new UserListItemDto(7, "Jane", "Doe", "jane@example.com", false, new(1991, 3, 15));
+        var updatedRequest = default(CreateUserRequestDto);
+
+        this.usersClient.Setup(c => c.GetUserAsync(7, default)).ReturnsAsync(original);
+        this.usersClient
+            .Setup(c => c.UpdateUserAsync(7, It.IsAny<CreateUserRequestDto>(), default))
+            .Callback<long, CreateUserRequestDto, System.Threading.CancellationToken>((_, req, _) => updatedRequest = req)
+            .ReturnsAsync(new UserListItemDto(7, "Janet", "Smith", "janet@example.com", true, new(1990, 5, 20)));
+
+        var cut = Render<Details>(ps => ps.Add(p => p.id, 7));
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Act - enter edit mode
+        cut.Find("[data-testid='edit-user']").Click();
+
+        // Change fields
+        cut.Find("#forename").Change("Janet");
+        cut.Find("#surname").Change("Smith");
+        cut.Find("#email").Change("janet@example.com");
+        // bUnit InputDate expects yyyy-MM-dd string when changing via markup
+        cut.Find("#dob").Change("1990-05-20");
+        // toggle active to true
+        cut.Find("#isActive").Change(true);
+
+        // Save
+        cut.Find("[data-testid='save-user']").Click();
+
+        // Assert - UpdateUserAsync was called with the edited values
+        this.usersClient.Verify(c => c.UpdateUserAsync(7, It.Is<CreateUserRequestDto>(r =>
+            r.Forename == "Janet" &&
+            r.Surname == "Smith" &&
+            r.Email == "janet@example.com" &&
+            r.IsActive == true &&
+            r.DateOfBirth == new DateTime(1990, 5, 20)
+        ), default), Times.Once);
+
+        // And UI reflects updated values and is back to read-only
+        cut.Find("[data-testid='user-forename']").TextContent.Should().Be("Janet");
+        cut.Find("[data-testid='user-surname']").TextContent.Should().Be("Smith");
+        cut.Find("[data-testid='user-email']").TextContent.Should().Be("janet@example.com");
+        cut.Find("[data-testid='user-dob']").TextContent.Should().Be(new DateTime(1990, 5, 20).ToString("d", System.Globalization.CultureInfo.CurrentCulture));
+        cut.Find("[data-testid='user-active']").TextContent.Should().Be("Yes");
+        cut.Markup.Should().Contain("data-testid=\"edit-user\"");
+    }
+
+    [Fact]
     public void ShowsLoadingInitially()
     {
         // Arrange

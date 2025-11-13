@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using UserManagement.Data.Entities;
@@ -22,6 +23,36 @@ namespace UserManagement.Web.Controllers;
 [Produces("application/json")]
 public class UsersController(IUserService userService) : ControllerBase
 {
+    /// <summary>
+    /// Validates a Create/Update user request using data annotations and prepares a problem details
+    /// object when invalid.
+    /// </summary>
+    /// <param name="request">The request DTO to validate.</param>
+    /// <param name="problem">The populated ValidationProblemDetails when invalid; otherwise null.</param>
+    /// <returns>True when valid; otherwise false.</returns>
+    private bool TryValidateRequest(CreateUserRequestDto request, out ValidationProblemDetails? problem)
+    {
+        var validationResults = new List<ValidationResult>();
+        var isValid = Validator.TryValidateObject(
+            request,
+            new(request),
+            validationResults,
+            validateAllProperties: true);
+
+        if (!isValid)
+        {
+            foreach (var vr in validationResults)
+            {
+                var memberName = vr.MemberNames.FirstOrDefault() ?? string.Empty;
+                ModelState.AddModelError(memberName, vr.ErrorMessage ?? "Validation error");
+            }
+            problem = new ValidationProblemDetails(ModelState);
+            return false;
+        }
+
+        problem = null;
+        return true;
+    }
     /// <summary>
     /// Retrieves the full list of users.
     /// </summary>
@@ -78,6 +109,46 @@ public class UsersController(IUserService userService) : ControllerBase
     }
 
     /// <summary>
+    /// Updates an existing user.
+    /// </summary>
+    /// <param name="id">The identifier of the user to update.</param>
+    /// <param name="request">The updated values for the user.</param>
+    /// <returns>200 OK with the updated user, 404 if not found, or 400 if validation fails.</returns>
+    /// <response code="200">The user was updated successfully.</response>
+    /// <response code="400">The request payload failed validation.</response>
+    /// <response code="404">No user with the specified ID was found.</response>
+    [HttpPut("{id:long}")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(UserListItemDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult<UserListItemDto> Update(long id, [FromBody] CreateUserRequestDto request)
+    {
+        if (!TryValidateRequest(request, out var problem))
+            return BadRequest(problem);
+
+        var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
+        if (entity is null)
+            return NotFound();
+
+        var changed = false;
+        if (!string.Equals(entity.Forename, request.Forename, StringComparison.Ordinal))
+        { entity.Forename = request.Forename; changed = true; }
+        if (!string.Equals(entity.Surname, request.Surname, StringComparison.Ordinal))
+        { entity.Surname = request.Surname; changed = true; }
+        if (!string.Equals(entity.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+        { entity.Email = request.Email; changed = true; }
+        if (entity.IsActive != request.IsActive)
+        { entity.IsActive = request.IsActive; changed = true; }
+        if (entity.DateOfBirth != request.DateOfBirth)
+        { entity.DateOfBirth = request.DateOfBirth; changed = true; }
+
+        var updated = changed ? userService.Update(entity) : entity;
+        return Ok(updated.Map());
+    }
+
+    /// <summary>
     /// Creates a new user.
     /// </summary>
     /// <param name="request">The details for the new user. Properties are validated using data annotations.</param>
@@ -91,22 +162,8 @@ public class UsersController(IUserService userService) : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public ActionResult<UserListItemDto> Create([FromBody] CreateUserRequestDto request)
     {
-        var validationResults = new List<ValidationResult>();
-        var isValid = Validator.TryValidateObject(
-            request,
-            new(request),
-            validationResults,
-            validateAllProperties: true);
-
-        if (!isValid)
-        {
-            foreach (var vr in validationResults)
-            {
-                var memberName = vr.MemberNames.FirstOrDefault() ?? string.Empty;
-                ModelState.AddModelError(memberName, vr.ErrorMessage ?? "Validation error");
-            }
-            return BadRequest(new ValidationProblemDetails(ModelState));
-        }
+        if (!TryValidateRequest(request, out var problem))
+            return BadRequest(problem);
 
         var user = new User
         {

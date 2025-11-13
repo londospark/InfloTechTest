@@ -32,6 +32,13 @@ public interface IUserService
     User Add(User user);
 
     /// <summary>
+    /// Update an existing user in the data store and return the updated entity.
+    /// </summary>
+    /// <param name="user">User entity with updated values. Must already exist.</param>
+    /// <returns>The same user instance after the update operation.</returns>
+    User Update(User user);
+
+    /// <summary>
     /// Delete a user by id.
     /// Returns true when found and deleted; false when not found.
     /// </summary>
