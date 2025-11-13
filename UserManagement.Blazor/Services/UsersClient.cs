@@ -18,6 +18,16 @@ public sealed class UsersClient(HttpClient http) : IUsersClient
         return result ?? new UserListDto([]);
     }
 
+    public async Task<UserListItemDto> GetUserAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var dto = await http.GetFromJsonAsync<UserListItemDto>($"api/users/{id}", cancellationToken);
+        if (dto is null)
+        {
+            throw new HttpRequestException("User not found or invalid response");
+        }
+        return dto;
+    }
+
     public async Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, CancellationToken cancellationToken = default)
     {
         var resp = await http.PostAsJsonAsync("api/users", request, cancellationToken);

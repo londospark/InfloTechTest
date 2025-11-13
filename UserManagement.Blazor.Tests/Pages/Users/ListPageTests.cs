@@ -62,6 +62,10 @@ public class ListPageTests : BunitContext
         cut.Markup.Should().Contain("john@example.com");
         cut.FindAll("table tbody tr").Count.Should().Be(1);
         cut.Markup.Should().Contain(dob.ToString("yyyy-MM-dd"));
+
+        // View link should be present and point to details page
+        var view = cut.Find("a[data-testid='view-1']");
+        view.GetAttribute("href").Should().Be("/users/1");
     }
 
     [Fact]
@@ -129,7 +133,7 @@ public class ListPageTests : BunitContext
         // Arrange
         RegisterServices();
         // initial list has one user with id 1
-        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1))]);
+        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new(1990, 1, 1))]);
         this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
         // After deletion, subsequent load returns empty
         this.usersClient.Setup(c => c.GetUsersByActiveAsync(It.IsAny<bool>(), default)).ReturnsAsync(new UserListDto([]));
@@ -152,7 +156,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1))]);
+        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new(1990, 1, 1))]);
         this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
 
         // Act
@@ -172,7 +176,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new DateTime(1990, 1, 1))]);
+        var users = new UserListDto([new(1, "John", "Doe", "john@example.com", true, new(1990, 1, 1))]);
         this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
 
         // Act

@@ -1,0 +1,81 @@
+﻿@page "/users/{id:long}"
+@inject Services.IUsersClient UsersClient
+@inject NavigationManager Nav
+
+<PageTitle>User Details</PageTitle>
+
+<h3>User Details</h3>
+
+@if (loading)
+{
+    <p>Loading...</p>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger" role="alert">@error</div>
+}
+else if (user is not null)
+{
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Id</dt>
+                <dd class="col-sm-9" data-testid="user-id">@user.Id</dd>
+
+                <dt class="col-sm-3">Forename</dt>
+                <dd class="col-sm-9" data-testid="user-forename">@user.Forename</dd>
+
+                <dt class="col-sm-3">Surname</dt>
+                <dd class="col-sm-9" data-testid="user-surname">@user.Surname</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9" data-testid="user-email">@user.Email</dd>
+
+                <dt class="col-sm-3">Date of Birth</dt>
+                <dd class="col-sm-9" data-testid="user-dob">@user.DateOfBirth.ToString("yyyy-MM-dd")</dd>
+
+                <dt class="col-sm-3">Active</dt>
+                <dd class="col-sm-9" data-testid="user-active">@(user.IsActive ? "Yes" : "No")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <a href="/users" class="btn btn-secondary mt-3">Back to list</a>
+}
+else
+{
+    <p>Not found.</p>
+}
+
+@code {
+    [Parameter]
+    public long id { get; set; }
+
+    private bool loading = true;
+    private string? error;
+    private Shared.DTOs.UserListItemDto? user;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        error = null;
+        user = null;
+        try
+        {
+            user = await UsersClient.GetUserAsync(id);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
