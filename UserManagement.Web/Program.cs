@@ -44,7 +44,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(opt =>
+    {
+        opt.Title = "User Management API";
+        opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        opt.Theme = ScalarTheme.BluePlanet;
+    });
 }
 
 using (var scope = app.Services.CreateScope())
