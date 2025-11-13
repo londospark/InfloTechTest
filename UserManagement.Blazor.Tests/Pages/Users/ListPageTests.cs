@@ -61,7 +61,7 @@ public class ListPageTests : BunitContext
         cut.Markup.Should().Contain("Users");
         cut.Markup.Should().Contain("john@example.com");
         cut.FindAll("table tbody tr").Count.Should().Be(1);
-        cut.Markup.Should().Contain(dob.ToString("yyyy-MM-dd"));
+        cut.Markup.Should().Contain(dob.ToString("d", System.Globalization.CultureInfo.CurrentCulture));
 
         // View link should be present and point to details page
         var view = cut.Find("a[data-testid='view-1']");

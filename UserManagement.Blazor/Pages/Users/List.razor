@@ -55,7 +55,7 @@ else if (users?.Items?.Count > 0)
                     <td>@u.Forename</td>
                     <td>@u.Surname</td>
                     <td>@u.Email</td>
-                    <td>@u.DateOfBirth.ToString("yyyy-MM-dd")</td>
+                    <td>@u.DateOfBirth.ToString("d", System.Globalization.CultureInfo.CurrentCulture)</td>
                     <td>
                         @if (u.IsActive)
                         {

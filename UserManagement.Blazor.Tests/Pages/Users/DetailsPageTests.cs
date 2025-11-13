@@ -55,7 +55,7 @@ public class DetailsPageTests : BunitContext
         cut.Find("[data-testid='user-forename']").TextContent.Should().Be("Jane");
         cut.Find("[data-testid='user-surname']").TextContent.Should().Be("Doe");
         cut.Find("[data-testid='user-email']").TextContent.Should().Be("jane@example.com");
-        cut.Find("[data-testid='user-dob']").TextContent.Should().Be("1991-03-15");
+        cut.Find("[data-testid='user-dob']").TextContent.Should().Be(new DateTime(1991, 3, 15).ToString("d", System.Globalization.CultureInfo.CurrentCulture));
         cut.Find("[data-testid='user-active']").TextContent.Should().Be("No");
     }
 
