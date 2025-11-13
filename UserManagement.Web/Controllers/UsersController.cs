@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.ComponentModel.DataAnnotations;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Interfaces;
 using UserManagement.Shared.DTOs;
@@ -15,7 +16,7 @@ public class UsersController(IUserService userService) : ControllerBase
         var items = userService.GetAll().Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
-        return dto;
+        return Ok(dto);
     }
 
     [HttpGet("filter")]
@@ -24,12 +25,40 @@ public class UsersController(IUserService userService) : ControllerBase
         var items = userService.FilterByActive(isActive).Select(Mappers.Map).ToList();
 
         var dto = new UserListDto(items);
-        return dto;
+        return Ok(dto);
+    }
+
+    [HttpGet("{id:long}")]
+    public ActionResult<UserListItemDto> GetById(long id)
+    {
+        var entity = userService.GetAll().FirstOrDefault(u => u.Id == id);
+        if (entity is null)
+            return NotFound();
+
+        return Ok(entity.Map());
     }
 
     [HttpPost]
     public ActionResult<UserListItemDto> Create([FromBody] CreateUserRequestDto request)
     {
+        // Validate using DataAnnotations on the DTO (works even when invoked directly in tests)
+        var validationResults = new List<ValidationResult>();
+        var isValid = Validator.TryValidateObject(
+            request,
+            new(request),
+            validationResults,
+            validateAllProperties: true);
+
+        if (!isValid)
+        {
+            foreach (var vr in validationResults)
+            {
+                var memberName = vr.MemberNames.FirstOrDefault() ?? string.Empty;
+                ModelState.AddModelError(memberName, vr.ErrorMessage ?? "Validation error");
+            }
+            return BadRequest(new ValidationProblemDetails(ModelState));
+        }
+
         var user = new User
         {
             Forename = request.Forename,
@@ -39,9 +68,8 @@ public class UsersController(IUserService userService) : ControllerBase
             DateOfBirth = request.DateOfBirth
         };
 
-        var created = userService.Add(user);
-        var dto = Mappers.Map(created);
-        return dto;
+        var dto = userService.Add(user).Map();
+        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
 }

@@ -1,8 +1,7 @@
-﻿using System;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace UserManagement.Shared.DTOs;
 
-// Immutable DTOs shared between Web API and Blazor client
 public sealed record UserListDto(IReadOnlyList<UserListItemDto> Items);
 
 public sealed record UserListItemDto(
@@ -14,11 +13,34 @@ public sealed record UserListItemDto(
     DateTime DateOfBirth
 );
 
-// Request DTO for creating a new user
-public sealed record CreateUserRequestDto(
-    string Forename,
-    string Surname,
-    string Email,
-    DateTime DateOfBirth,
-    bool IsActive
-);
+public sealed record CreateUserRequestDto : IValidatableObject
+{
+    [Required, StringLength(100)] public string Forename { get; set; } = string.Empty;
+    [Required, StringLength(100)] public string Surname { get; set; } = string.Empty;
+    [Required, EmailAddress, StringLength(255)] public string Email { get; set; } = string.Empty;
+    [Required] public DateTime DateOfBirth { get; set; }
+    public bool IsActive { get; set; }
+
+    public CreateUserRequestDto(string forename, string surname, string email, DateTime dateOfBirth, bool isActive)
+    {
+        Forename = forename;
+        Surname = surname;
+        Email = email;
+        DateOfBirth = dateOfBirth;
+        IsActive = isActive;
+    }
+
+    // Parameterless ctor for Blazor binding
+    public CreateUserRequestDto() { }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (DateOfBirth > DateTime.Now)
+        {
+            yield return new(
+                "Date of Birth cannot be in the future.",
+                [nameof(DateOfBirth)]
+            );
+        }
+    }
+}

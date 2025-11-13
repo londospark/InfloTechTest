@@ -45,7 +45,7 @@ else if (users?.Items?.Count > 0)
                     <td>@u.Forename</td>
                     <td>@u.Surname</td>
                     <td>@u.Email</td>
-                    <td>@u.DateOfBirth.ToString("yyyy-MM-dd")</td>
+                    <td>@u.DateOfBirth.ToString("d")</td>
                     <td>
                         @if (u.IsActive)
                         {
@@ -100,7 +100,7 @@ else
         catch (Exception ex)
         {
             error = ex.Message;
-            users = new Shared.DTOs.UserListDto([]);
+            users = new([]);
         }
         finally
         {

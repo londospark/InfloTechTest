@@ -1,6 +1,6 @@
 ﻿@page "/users/add"
-@using System.ComponentModel.DataAnnotations
-@inject UserManagement.Blazor.Services.IUsersClient UsersClient
+@using UserManagement.Shared.DTOs
+@inject Services.IUsersClient UsersClient
 @inject NavigationManager Nav
 
 <PageTitle>Add User</PageTitle>
@@ -45,23 +45,15 @@
 </EditForm>
 
 @code {
-    private CreateUserForm model = new();
+    private CreateUserRequestDto model = new()
+    {
+        IsActive = true,
+        DateOfBirth = DateTime.Today
+    };
 
     private async Task HandleValidSubmit()
     {
-        var req = new UserManagement.Shared.DTOs.CreateUserRequestDto(
-            model.Forename!, model.Surname!, model.Email!, model.DateOfBirth, model.IsActive);
-
-        await UsersClient.CreateUserAsync(req);
+        await UsersClient.CreateUserAsync(model);
         Nav.NavigateTo("/users");
-    }
-
-    private sealed class CreateUserForm
-    {
-        [Required, StringLength(100)] public string? Forename { get; set; }
-        [Required, StringLength(100)] public string? Surname { get; set; }
-        [Required, EmailAddress, StringLength(255)] public string? Email { get; set; }
-        [Required] public DateTime DateOfBirth { get; set; } = DateTime.Today;
-        public bool IsActive { get; set; } = true;
     }
 }

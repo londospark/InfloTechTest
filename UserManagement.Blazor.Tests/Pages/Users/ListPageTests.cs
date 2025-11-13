@@ -13,11 +13,11 @@ namespace UserManagement.Blazor.Tests.Pages.Users;
 
 public class ListPageTests : BunitContext
 {
-    private readonly Mock<IUsersClient> _usersClient = new();
+    private readonly Mock<IUsersClient> usersClient = new();
 
     private void RegisterServices()
     {
-        Services.AddScoped(_ => _usersClient.Object);
+        Services.AddScoped(_ => this.usersClient.Object);
     }
 
     [Fact]
@@ -25,12 +25,12 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        _usersClient
+        this.usersClient
             .Setup(c => c.GetUsersAsync(default))
             .Returns(async () =>
             {
                 await Task.Delay(10);
-                return new UserListDto(Array.Empty<UserListItemDto>());
+                return new(Array.Empty<UserListItemDto>());
             });
 
         // Act
@@ -50,7 +50,7 @@ public class ListPageTests : BunitContext
         {
             new UserListItemDto(1, "John", "Doe", "john@example.com", true, dob)
         });
-        _usersClient
+        this.usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(users);
 
@@ -71,7 +71,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        _usersClient
+        this.usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
 
@@ -88,10 +88,10 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        _usersClient
+        this.usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
-        _usersClient
+        this.usersClient
             .Setup(c => c.GetUsersByActiveAsync(true, default))
             .ReturnsAsync(new UserListDto(Array.Empty<UserListItemDto>()));
 
@@ -104,7 +104,7 @@ public class ListPageTests : BunitContext
         select.Change("Active");
 
         // Assert
-        _usersClient.Verify(c => c.GetUsersByActiveAsync(true, default), Times.Once);
+        this.usersClient.Verify(c => c.GetUsersByActiveAsync(true, default), Times.Once);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class ListPageTests : BunitContext
     {
         // Arrange
         RegisterServices();
-        _usersClient
+        this.usersClient
             .Setup(c => c.GetUsersAsync(default))
             .ThrowsAsync(new InvalidOperationException("Boom"));
 

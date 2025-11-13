@@ -17,7 +17,7 @@ public class UsersClientTests
     public async Task GetUsersAsync_WhenApiReturnsNull_ReturnsEmptyList()
     {
         // Arrange
-        var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        var handler = new StubHandler(_ => new(HttpStatusCode.OK)
         {
             Content = new StringContent("null")
         });
@@ -44,7 +44,7 @@ public class UsersClientTests
         {
             captured = req;
             // Return a simple valid payload
-            var payload = new UserListDto(new[] { new UserListItemDto(1, "A", "B", "a@b.com", true, new DateTime(2000,1,1)) });
+            var payload = new UserListDto(new[] { new UserListItemDto(1, "A", "B", "a@b.com", true, new(2000,1,1)) });
             var resp = new HttpResponseMessage(HttpStatusCode.OK);
             resp.Content = JsonContent.Create(payload);
             return resp;
@@ -53,7 +53,7 @@ public class UsersClientTests
         var client = new UsersClient(http);
 
         // Act
-        var _ = await client.GetUsersByActiveAsync(isActive);
+        _ = await client.GetUsersByActiveAsync(isActive);
 
         // Assert
         captured.Should().NotBeNull();
@@ -61,11 +61,9 @@ public class UsersClientTests
         captured!.RequestUri!.ToString().Should().EndWith(expected);
     }
 
-    private sealed class StubHandler : HttpMessageHandler
+    private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) : HttpMessageHandler
     {
-        private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
-        public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) => _handler = handler;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(_handler(request));
+            => Task.FromResult(handler(request));
     }
 }
