@@ -12,7 +12,7 @@ public sealed class HubConnectionWrapper(HubConnection inner) : IUserLogsHubConn
 
     public Task InvokeAsync(string method, params object[] args) => inner.InvokeAsync(method, args);
 
-    public void On<T>(string methodName, Action<T> handler) => inner.On<T>(methodName, handler);
+    public void On<T>(string methodName, Action<T> handler) => inner.On(methodName, handler);
 
     public ValueTask DisposeAsync() => inner.DisposeAsync();
 

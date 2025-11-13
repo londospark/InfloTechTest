@@ -261,12 +261,12 @@ public class UserControllerTests
     private sealed class MockLogger<T>
     {
         private readonly System.Collections.Concurrent.ConcurrentBag<(LogLevel, string)> _entries = new();
-        public Microsoft.Extensions.Logging.ILogger<T> AsILogger() => new Adapter(this);
+        public ILogger<T> AsILogger() => new Adapter(this);
         public bool LogContains(LogLevel level, string contains) => _entries.Any(e => e.Item1 == level && e.Item2.Contains(contains));
         public void Add(LogLevel level, string message) => _entries.Add((level, message));
 
         private sealed class Adapter(MockLogger<T> parent)
-            : Microsoft.Extensions.Logging.ILogger, Microsoft.Extensions.Logging.ILogger<T>
+            : ILogger, ILogger<T>
         {
             private readonly MockLogger<T> _parent = parent;
             public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;

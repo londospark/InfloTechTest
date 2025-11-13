@@ -1,12 +1,13 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using MockQueryable;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Implementations;
 using UserManagement.Web.Controllers;
 using UserManagement.Web.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace UserManagement.Web.Tests;
 
@@ -15,10 +16,19 @@ public class DatabaseLoggerControllerIntegrationTests
     [Fact]
     public async Task List_DoesNotPersist_UserLogs()
     {
-        var dataContext = new Mock<Data.IDataContext>();
-        var users = new[] { new User { Id = 1, Forename = "A", Surname = "B", Email = "a@b.com", IsActive = true, DateOfBirth = DateTime.UtcNow.AddYears(-30) } };
-        var mockQueryable = users.BuildMock();
-        dataContext.Setup(dc => dc.GetAll<User>()).Returns(mockQueryable);
+        // Use real SQLite in-memory DataContext
+        var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var opts = new DbContextOptionsBuilder<Data.DataContext>()
+            .UseSqlite(connection)
+            .Options;
+        await using var ctx = new Data.DataContext(opts);
+        ctx.Database.EnsureCreated();
+
+        // Seed a user that List will return
+        var user = new User { Forename = "A", Surname = "B", Email = "a@b.com", IsActive = true, DateOfBirth = DateTime.UtcNow.AddYears(-30) };
+        ctx.Users!.Add(user);
+        ctx.SaveChanges();
 
         var userLogService = new Mock<Services.Interfaces.IUserLogService>();
 
@@ -35,7 +45,7 @@ public class DatabaseLoggerControllerIntegrationTests
 
         var dbLogger = new DatabaseLogger<UsersController>(factory, scopeFactory.Object, null);
 
-        var controller = new UsersController(new UserService(dataContext.Object), userLogService.Object, dbLogger);
+        var controller = new UsersController(new UserService(ctx), userLogService.Object, dbLogger);
 
         var result = await controller.List();
 
@@ -46,11 +56,18 @@ public class DatabaseLoggerControllerIntegrationTests
     [Fact]
     public async Task Create_Persists_UserLog_WithAssignedId()
     {
-        var dataContext = new Mock<Data.IDataContext>();
+        var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var opts = new DbContextOptionsBuilder<Data.DataContext>()
+            .UseSqlite(connection)
+            .Options;
+        await using var ctx = new Data.DataContext(opts);
+        ctx.Database.EnsureCreated();
+
         var userLogService = new Mock<Services.Interfaces.IUserLogService>();
 
-        // Arrange create to assign an id like the real DB would
-        dataContext.Setup(dc => dc.CreateAsync(It.IsAny<User>())).Callback<User>(u => u.Id = 101).Returns(Task.CompletedTask);
+        var logs = new System.Collections.Generic.List<UserLog>();
+        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>())).Callback<UserLog>(logs.Add).ReturnsAsync((UserLog l) => l);
 
         var factory = new FakeLoggerFactory();
 
@@ -64,25 +81,36 @@ public class DatabaseLoggerControllerIntegrationTests
 
         var dbLogger = new DatabaseLogger<UsersController>(factory, scopeFactory.Object, null);
 
-        var controller = new UsersController(new UserService(dataContext.Object), userLogService.Object, dbLogger);
+        var controller = new UsersController(new UserService(ctx), userLogService.Object, dbLogger);
 
         var req = new Shared.DTOs.CreateUserRequestDto("X", "Y", "x@y.com", new DateTime(1990,1,1), true);
 
         var action = await controller.Create(req);
 
         // Expect at least one persisted log containing the created user's id
-        userLogService.Verify(s => s.AddAsync(It.Is<UserLog>(l => l.UserId == 101 && l.Message.Contains("Created user id"))), Times.AtLeastOnce);
+        logs.Should().NotBeEmpty();
+        logs.Should().Contain(l => l.Message.Contains("Created user id") && l.UserId > 0);
     }
 
     [Fact]
     public async Task GetById_Persists_Logs_WhenUserExists()
     {
-        var dataContext = new Mock<Data.IDataContext>();
-        var userLogService = new Mock<Services.Interfaces.IUserLogService>();
+        var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var opts = new DbContextOptionsBuilder<Data.DataContext>()
+            .UseSqlite(connection)
+            .Options;
+        await using var ctx = new Data.DataContext(opts);
+        ctx.Database.EnsureCreated();
 
-        var users = new[] { new User { Id = 202, Forename = "F", Surname = "S", Email = "f@s.com", IsActive = true, DateOfBirth = DateTime.UtcNow.AddYears(-20) } };
-        var mockQueryable = users.BuildMock();
-        dataContext.Setup(dc => dc.GetAll<User>()).Returns(mockQueryable);
+        var user = new User { Forename = "F", Surname = "S", Email = "f@s.com", IsActive = true, DateOfBirth = DateTime.UtcNow.AddYears(-20) };
+        ctx.Users!.Add(user);
+        ctx.SaveChanges();
+        var id = user.Id;
+
+        var userLogService = new Mock<Services.Interfaces.IUserLogService>();
+        var logs = new System.Collections.Generic.List<UserLog>();
+        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>())).Callback<UserLog>(logs.Add).ReturnsAsync((UserLog l) => l);
 
         var factory = new FakeLoggerFactory();
 
@@ -96,23 +124,32 @@ public class DatabaseLoggerControllerIntegrationTests
 
         var dbLogger = new DatabaseLogger<UsersController>(factory, scopeFactory.Object, null);
 
-        var controller = new UsersController(new UserService(dataContext.Object), userLogService.Object, dbLogger);
+        var controller = new UsersController(new UserService(ctx), userLogService.Object, dbLogger);
 
-        var result = await controller.GetById(202);
+        var result = await controller.GetById(id);
 
-        userLogService.Verify(s => s.AddAsync(It.Is<UserLog>(l => l.UserId == 202)), Times.AtLeastOnce);
+        logs.Should().Contain(l => l.UserId == id);
     }
 
     [Fact]
     public async Task Delete_Persists_Logs_WhenUserDeleted()
     {
-        var dataContext = new Mock<Data.IDataContext>();
-        var userLogService = new Mock<Services.Interfaces.IUserLogService>();
+        var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        var opts = new DbContextOptionsBuilder<Data.DataContext>()
+            .UseSqlite(connection)
+            .Options;
+        await using var ctx = new Data.DataContext(opts);
+        ctx.Database.EnsureCreated();
 
-        var users = new[] { new User { Id = 303, Forename = "D", Surname = "E", Email = "d@e.com", IsActive = true, DateOfBirth = DateTime.UtcNow.AddYears(-25) } };
-        var mockQueryable = users.BuildMock();
-        dataContext.Setup(dc => dc.GetAll<User>()).Returns(mockQueryable);
-        dataContext.Setup(dc => dc.DeleteAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
+        var user = new User { Forename = "D", Surname = "E", Email = "d@e.com", IsActive = true, DateOfBirth = DateTime.UtcNow.AddYears(-25) };
+        ctx.Users!.Add(user);
+        ctx.SaveChanges();
+        var id = user.Id;
+
+        var userLogService = new Mock<Services.Interfaces.IUserLogService>();
+        var logs = new System.Collections.Generic.List<UserLog>();
+        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>())).Callback<UserLog>(logs.Add).ReturnsAsync((UserLog l) => l);
 
         var factory = new FakeLoggerFactory();
 
@@ -126,11 +163,11 @@ public class DatabaseLoggerControllerIntegrationTests
 
         var dbLogger = new DatabaseLogger<UsersController>(factory, scopeFactory.Object, null);
 
-        var controller = new UsersController(new UserService(dataContext.Object), userLogService.Object, dbLogger);
+        var controller = new UsersController(new UserService(ctx), userLogService.Object, dbLogger);
 
-        var result = await controller.Delete(303);
+        var result = await controller.Delete(id);
 
-        userLogService.Verify(s => s.AddAsync(It.Is<UserLog>(l => l.UserId == 303)), Times.AtLeastOnce);
+        logs.Should().Contain(l => l.UserId == id);
     }
 
     private sealed class FakeLoggerFactory : ILoggerFactory

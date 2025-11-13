@@ -98,10 +98,7 @@ public class DatabaseLoggerTests
     private static List<UserLog> CaptureLogs(Mock<IUserLogService> userLogService)
     {
         var logs = new List<UserLog>();
-        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>())).Callback<UserLog>(log =>
-        {
-            logs.Add(log);
-        }).ReturnsAsync((UserLog log) => log);
+        userLogService.Setup(s => s.AddAsync(It.IsAny<UserLog>())).Callback<UserLog>(logs.Add).ReturnsAsync((UserLog log) => log);
         return logs;
     }
 
