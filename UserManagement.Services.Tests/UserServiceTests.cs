@@ -43,6 +43,38 @@ public class UserServiceTests
         result.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Delete_WhenUserExists_DeletesAndReturnsTrue()
+    {
+        // Arrange
+        var service = this.CreateService();
+        var users = this.SetupUsers();
+        var existing = users.First();
+        existing.Id = 10;
+
+        // Act
+        var result = service.Delete(10);
+
+        // Assert
+        result.Should().BeTrue();
+        this.dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u == existing)), Times.Once);
+    }
+
+    [Fact]
+    public void Delete_WhenUserMissing_ReturnsFalseAndDoesNotDelete()
+    {
+        // Arrange
+        var service = this.CreateService();
+        _ = this.SetupUsers();
+
+        // Act
+        var result = service.Delete(999);
+
+        // Assert
+        result.Should().BeFalse();
+        this.dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
+    }
+
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true)
     {
         var users = new[]

@@ -8,4 +8,6 @@ public interface IUsersClient
     Task<UserListDto> GetUsersByActiveAsync(bool isActive, CancellationToken cancellationToken = default);
 
     Task<UserListItemDto> CreateUserAsync(CreateUserRequestDto request, CancellationToken cancellationToken = default);
+
+    Task DeleteUserAsync(long id, CancellationToken cancellationToken = default);
 }

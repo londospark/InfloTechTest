@@ -61,6 +61,28 @@ public class UsersClientTests
         captured!.RequestUri!.ToString().Should().EndWith(expected);
     }
 
+    [Fact]
+    public async Task DeleteUserAsync_SendsDeleteToExpectedUrl()
+    {
+        // Arrange
+        HttpRequestMessage? captured = null;
+        var handler = new StubHandler(req =>
+        {
+            captured = req;
+            return new(HttpStatusCode.NoContent);
+        });
+        var http = new HttpClient(handler) { BaseAddress = new("http://localhost/") };
+        var client = new UsersClient(http);
+
+        // Act
+        await client.DeleteUserAsync(42);
+
+        // Assert
+        captured.Should().NotBeNull();
+        captured!.Method.Should().Be(HttpMethod.Delete);
+        captured!.RequestUri!.ToString().Should().EndWith("api/users/42");
+    }
+
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

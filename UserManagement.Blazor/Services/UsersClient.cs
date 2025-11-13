@@ -25,4 +25,10 @@ public sealed class UsersClient(HttpClient http) : IUsersClient
         var dto = await resp.Content.ReadFromJsonAsync<UserListItemDto>(cancellationToken: cancellationToken);
         return dto!;
     }
+
+    public async Task DeleteUserAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var resp = await http.DeleteAsync($"api/users/{id}", cancellationToken);
+        resp.EnsureSuccessStatusCode();
+    }
 }

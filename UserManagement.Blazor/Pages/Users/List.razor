@@ -1,5 +1,6 @@
 ﻿@page "/users"
 @inject Services.IUsersClient UsersClient
+@using UserManagement.Blazor.Components
 
 <PageTitle>Users</PageTitle>
 
@@ -35,6 +36,7 @@ else if (users?.Items?.Count > 0)
                 <th>Email</th>
                 <th>Date of Birth</th>
                 <th>Active</th>
+                <th>Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -45,7 +47,7 @@ else if (users?.Items?.Count > 0)
                     <td>@u.Forename</td>
                     <td>@u.Surname</td>
                     <td>@u.Email</td>
-                    <td>@u.DateOfBirth.ToString("d")</td>
+                    <td>@u.DateOfBirth.ToString("yyyy-MM-dd")</td>
                     <td>
                         @if (u.IsActive)
                         {
@@ -55,6 +57,9 @@ else if (users?.Items?.Count > 0)
                         {
                             <span class="badge bg-secondary">No</span>
                         }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" data-testid="@($"delete-{u.Id}")" @onclick="() => OnDeleteClicked(u.Id)">Delete</button>
                     </td>
                 </tr>
             }
@@ -108,4 +113,53 @@ else
             StateHasChanged();
         }
     }
+
+    private bool showConfirm;
+    private long? pendingDeleteId;
+
+    private void OnDeleteClicked(long id)
+    {
+        pendingDeleteId = id;
+        showConfirm = true;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (pendingDeleteId is null)
+        {
+            showConfirm = false;
+            return;
+        }
+
+        try
+        {
+            await UsersClient.DeleteUserAsync(pendingDeleteId.Value);
+            showConfirm = false;
+            pendingDeleteId = null;
+            await LoadUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            showConfirm = false;
+            pendingDeleteId = null;
+        }
+    }
+
+    private void CancelDelete()
+    {
+        showConfirm = false;
+        pendingDeleteId = null;
+    }
 }
+
+<ConfirmDialog
+    Show="@showConfirm"
+    Title="Confirm deletion"
+    Message="Are you sure you want to delete this user?"
+    ConfirmText="Delete"
+    CancelText="Cancel"
+    ConfirmTestId="confirm-delete"
+    CancelTestId="cancel-delete"
+    OnConfirm="ConfirmDeleteAsync"
+    OnCancel="CancelDelete" />

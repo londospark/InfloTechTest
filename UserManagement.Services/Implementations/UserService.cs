@@ -23,4 +23,13 @@ public class UserService(IDataContext dataAccess) : IUserService
         dataAccess.Create(user);
         return user;
     }
+
+    public bool Delete(long id)
+    {
+        var entity = dataAccess.GetAll<User>().FirstOrDefault(u => u.Id == id);
+        if (entity is null)
+            return false;
+        dataAccess.Delete(entity);
+        return true;
+    }
 }

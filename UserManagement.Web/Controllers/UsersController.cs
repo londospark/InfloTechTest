@@ -72,6 +72,15 @@ public class UsersController(IUserService userService) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
+    [HttpDelete("{id:long}")]
+    public ActionResult Delete(long id)
+    {
+        var deleted = userService.Delete(id);
+        if (!deleted)
+            return NotFound();
+        return NoContent();
+    }
+
 }
 
 public static class Mappers

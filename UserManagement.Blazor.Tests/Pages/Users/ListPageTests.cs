@@ -61,7 +61,7 @@ public class ListPageTests : BunitContext
         cut.Markup.Should().Contain("Users");
         cut.Markup.Should().Contain("john@example.com");
         cut.FindAll("table tbody tr").Count.Should().Be(1);
-        cut.Markup.Should().Contain(dob.ToString("d"));
+        cut.Markup.Should().Contain(dob.ToString("yyyy-MM-dd"));
     }
 
     [Fact]
@@ -121,5 +121,80 @@ public class ListPageTests : BunitContext
         // Assert
         cut.Markup.Should().Contain("alert alert-danger");
         cut.Markup.Should().Contain("Boom");
+    }
+
+    [Fact]
+    public async Task Delete_WhenConfirmed_CallsClientAndRefreshes()
+    {
+        // Arrange
+        RegisterServices();
+        // initial list has one user with id 1
+        var users = new UserListDto([ new(1, "John", "Doe", "john@example.com", true, new DateTime(1990,1,1)) ]);
+        this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
+        // After deletion, subsequent load returns empty
+        this.usersClient.Setup(c => c.GetUsersByActiveAsync(It.IsAny<bool>(), default)).ReturnsAsync(new UserListDto([]));
+        this.usersClient.Setup(c => c.DeleteUserAsync(1, default)).Returns(Task.CompletedTask);
+
+        // Act
+        var cut = Render<List>();
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Click delete then confirm in modal
+        cut.Find("button[data-testid='delete-1']").Click();
+        cut.Find("button[data-testid='confirm-delete']").Click();
+
+        // Assert
+        this.usersClient.Verify(c => c.DeleteUserAsync(1, default), Times.Once);
+    }
+
+    [Fact]
+    public async Task Delete_WhenCancelled_DoesNotCallClient()
+    {
+        // Arrange
+        RegisterServices();
+        var users = new UserListDto([ new(1, "John", "Doe", "john@example.com", true, new DateTime(1990,1,1)) ]);
+        this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
+
+        // Act
+        var cut = Render<List>();
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Click delete then cancel in modal
+        cut.Find("button[data-testid='delete-1']").Click();
+        cut.Find("button[data-testid='cancel-delete']").Click();
+
+        // Assert
+        this.usersClient.Verify(c => c.DeleteUserAsync(It.IsAny<long>(), default), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmDialog_ShouldRenderAboveBackdrop_AndExposeClickableButtonsStyles()
+    {
+        // Arrange
+        RegisterServices();
+        var users = new UserListDto([ new(1, "John", "Doe", "john@example.com", true, new DateTime(1990,1,1)) ]);
+        this.usersClient.Setup(c => c.GetUsersAsync(default)).ReturnsAsync(users);
+
+        // Act
+        var cut = Render<List>();
+        await cut.InvokeAsync(() => Task.CompletedTask);
+
+        // Open confirm dialog
+        cut.Find("button[data-testid='delete-1']").Click();
+
+        // Assert desired layering and clickability indicators (expected correct behavior)
+        var modal = cut.Find(".modal");
+        var backdrop = cut.Find(".modal-backdrop");
+
+        // Expect explicit z-index styles to ensure modal is on top of the shaded overlay
+        modal.GetAttribute("style").Should().Contain("z-index: 1050");
+        backdrop.GetAttribute("style").Should().Contain("z-index: 1040");
+
+        // Expect the backdrop element to be rendered before the modal content in DOM
+        var markup = cut.Markup;
+        markup.IndexOf("modal-backdrop").Should().BeLessThan(markup.IndexOf("modal-dialog"));
+
+        // And the backdrop should not intercept clicks
+        backdrop.GetAttribute("style").Should().Contain("pointer-events: none");
     }
 }

@@ -177,6 +177,37 @@ public class UserControllerTests
 
         result.Result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
     }
+
+    [Fact]
+    public void Delete_WhenFound_ReturnsNoContent()
+    {
+        // Arrange
+        var controller = this.CreateController();
+        var users = this.SetupUsers();
+        users.First().Id = 5;
+
+        // Act
+        var result = controller.Delete(5);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>().Which.StatusCode.Should().Be(204);
+        this.dataContext.Verify(dc => dc.Delete(It.Is<User>(u => u.Id == 5)), Times.Once);
+    }
+
+    [Fact]
+    public void Delete_WhenMissing_ReturnsNotFound()
+    {
+        // Arrange
+        var controller = this.CreateController();
+        _ = this.SetupUsers();
+
+        // Act
+        var result = controller.Delete(999);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>().Which.StatusCode.Should().Be(404);
+        this.dataContext.Verify(dc => dc.Delete(It.IsAny<User>()), Times.Never);
+    }
     
     private IQueryable<User> SetupUsers(string forename = "Johnny", string surname = "User", string email = "juser@example.com", bool isActive = true, DateTime? dateOfBirth = null)
     {
