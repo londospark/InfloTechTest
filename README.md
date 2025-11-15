@@ -72,17 +72,23 @@ dotnet run
 
 Once the AppHost is running, the .NET Aspire dashboard will open. From there:
 
-- **📱 User Management App**: Click the **"Home"** link under the `blazor` resource
-  - Default URL: `https://localhost:7162` (or the port shown in the dashboard)
-  - This is the main Blazor application UI
+- **📱 Blazor Web App**: Click the **"Home"** link under the `Blazor` resource
+  - Default URL: `https://localhost:7183` (or the port shown in the dashboard)
+  - This is the main Blazor application UI for user management
 
-- **📚 API Reference (Scalar)**: Click the **"scalar"** link under the `webapi` resource  
-  - Default URL: `https://localhost:7274/scalar/v1` (or the port shown in the dashboard)
+- **📚 API Reference (Scalar)**: Click the **"Scalar API Reference"** link under the `API` resource  
+  - Default URL: `https://localhost:7084/scalar` (or the port shown in the dashboard)
   - Interactive API documentation with testing capabilities
+
+- **🌐 Web API**: Click the **"Home"** link under the `API` resource
+  - Default URL: `https://localhost:7084` (or the port shown in the dashboard)
+  - Direct access to the RESTful API endpoints
 
 - **📊 .NET Aspire Dashboard**: Monitor logs, traces, and metrics
   - Default URL: `https://localhost:17241` (or the port shown)
   - Real-time application telemetry and diagnostics
+
+> **Note**: .NET Aspire automatically assigns ports and manages service discovery. The actual ports may differ from the defaults shown above. Always check the Aspire dashboard for the current port assignments.
 
 ## ⚡ Performance Note
 
@@ -107,16 +113,28 @@ dotnet run --configuration Release
 
 ```
 UserManagement/
-├── UserManagement.AppHost/          # .NET Aspire orchestration
+├── UserManagement.AppHost/          # .NET Aspire orchestration (AppHost)
 ├── UserManagement.ServiceDefaults/  # Shared service configuration
-├── UserManagement.Blazor/           # Blazor Web App (server + WASM)
-├── UserManagement.Web/              # ASP.NET Core Web API
+├── UserManagement.Blazor/           # Blazor Web App (UI frontend)
+├── UserManagement.Web/              # ASP.NET Core Web API (backend)
 ├── UserManagement.Data/             # Entity Framework Core data layer
 ├── UserManagement.Services/         # Business logic layer
 ├── UserManagement.Shared/           # Shared DTOs and models
-├── UserManagement.Migrations/       # EF Core migrations
+├── UserManagement.Migrations/       # EF Core migration runner
 └── *.Tests/                         # Unit and integration tests
 ```
+
+### Resource Names in .NET Aspire
+
+When viewing the Aspire dashboard, you'll see these resources:
+
+| Resource Name | Description | Key Endpoints |
+|--------------|-------------|---------------|
+| **Blazor** | Blazor Web App frontend | Home (UI) |
+| **API** | ASP.NET Core Web API | Home (API), Scalar API Reference |
+| **Migrations** | Database migration runner | (Runs once on startup) |
+| **SQL-Server** | SQL Server 2022 container | (Internal use) |
+| **UserManagement** | SQL Server database | (Accessed via connection string) |
 
 ## 🧪 Running Tests
 
@@ -137,20 +155,23 @@ dotnet test UserManagement.Data.Tests
 ```bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
-
-## 📚 Documentation
-
+- 
 ### API Documentation
 
-The API is fully documented using OpenAPI/Swagger specifications:
+The API is fully documented using OpenAPI/Swagger with Scalar UI:
 
-- **Interactive Documentation**: Access via Scalar at `/scalar/v1` endpoint
-- **OpenAPI JSON**: Available at `/openapi/v1.json`
-- **Includes**:
-  - All endpoints with request/response schemas
-  - Authentication requirements
-  - Example requests and responses
-  - Try-it-out functionality
+- **Interactive Documentation**: Access via the **"Scalar API Reference"** link in the Aspire dashboard
+  - Direct URL: `https://localhost:7084/scalar` (port may vary)
+  - Modern, interactive API documentation interface
+- **OpenAPI JSON**: Available at `https://localhost:7084/openapi/v1.json`
+- **Swagger UI**: Alternative interface at `https://localhost:7084/swagger`
+
+**Features**:
+- All endpoints with request/response schemas
+- Try-it-out functionality for testing APIs
+- Example requests and responses
+- Authentication requirements
+- Real-time API testing
 
 ## 🔍 Database
 
